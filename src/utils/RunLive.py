@@ -9,8 +9,8 @@ from queue import Queue
 
 from utils.uav_utils import  manual_control
 from utils.params import params
-# from atlas_utils.presenteragent import presenter_channel
-# from atlas_utils.acl_image import AclImage
+from atlas_utils.presenteragent import presenter_channel
+from atlas_utils.acl_image import AclImage
 
 class LiveRunner:
     """
@@ -19,7 +19,7 @@ class LiveRunner:
     def __init__(self, uav):
         self.uav = uav
         self.model_params = params["task"]["classification"]["gesture_yuv"]
-        # self.uav_presenter_conf = params["presenter_server_conf"]
+        self.uav_presenter_conf = params["presenter_server_conf"]
         self.beforeCommand = "0"
         self.command = "No gesture"
         self.queue = Queue()
