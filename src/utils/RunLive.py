@@ -9,7 +9,7 @@ from queue import Queue
 
 from utils.uav_utils import  manual_control
 from utils.params import params
-from atlas_utils.presenteragent import presenter_channel
+# from atlas_utils.presenteragent import presenter_channel
 from atlas_utils.acl_image import AclImage
 
 class LiveRunner:
@@ -30,11 +30,11 @@ class LiveRunner:
         self._model_processor = getattr(self._model_processor, "ModelProcessor")
         self.model_processor = self._model_processor(self.model_params)
 
-    # def init_presenter_channel(self):
-    #     chan = presenter_channel.open_channel(self.uav_presenter_conf)
-    #     if chan is None:
-    #         print("Open presenter channel failed")
-    #         return
+    def init_presenter_channel(self):
+        chan = presenter_channel.open_channel(self.uav_presenter_conf)
+        if chan is None:
+            print("Open presenter channel failed")
+            return
 
     def engage_manual_control(self):
         # start new thread for manual control
@@ -47,6 +47,7 @@ class LiveRunner:
         if self.beforeCommand != self.command:
             self.beforeCommand = self.command
             self.queue.put(self.command)
+        print(self.command)
         return self.command
 
     def display_result(self):
@@ -54,10 +55,10 @@ class LiveRunner:
         self.uav.streamon()
         print("\n##################################################################################")
         print("Opening Presenter Server...")
-        chan = presenter_channel.open_channel(self.uav_presenter_conf)
-        if chan is None:
-            print("Open presenter channel failed")
-            return
+        # chan = presenter_channel.open_channel(self.uav_presenter_conf)
+        # if chan is None:
+        #     print("Open presenter channel failed")
+        #     return
 
         self.engage_manual_control()
         
@@ -80,6 +81,6 @@ class LiveRunner:
                 """ Display inference results and send to presenter channel """
                 _, jpeg_image = cv2.imencode('.jpg', result_img)
                 jpeg_image = AclImage(jpeg_image, frame_org.shape[0], frame_org.shape[1], jpeg_image.size)
-                chan.send_detection_data(frame_org.shape[0], frame_org.shape[1], jpeg_image, [])
+                # chan.send_detection_data(frame_org.shape[0], frame_org.shape[1], jpeg_image, [])
             except:
                 pass

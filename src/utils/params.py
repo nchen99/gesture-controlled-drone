@@ -8,6 +8,7 @@ def validate_paths():
     MODEL_PATH = os.path.join(PROJECT_DIR, "model")
     PRESENTER_SERVER_SH = os.path.join(SRC_PATH, "lib/server/run_presenter_server.sh")
     PRESENTER_SERVER_CONF = os.path.join(SRC_PATH, "uav_presenter_server.conf")
+    print(PRESENTER_SERVER_CONF)
     
     paths = {
         "SRC_PATH": SRC_PATH,

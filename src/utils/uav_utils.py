@@ -21,7 +21,7 @@ def manual_control(uav, q):
     while True:
         val = q.get()
         print(val)
-        if val == '3':
-            uav.takeoff()
-        elif val == '2':
-            uav.land() 
+        # if val == '3':
+        #     uav.takeoff()
+        # elif val == '2':
+        #     uav.land() 
