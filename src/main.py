@@ -1,7 +1,7 @@
 import sys
 import os
 import time
-import _thread
+from threading import Thread
 from utils.uav_utils import connect_uav 
 from utils.RunModels import RunModel
 from pid_controllers.run_track import init
@@ -14,5 +14,12 @@ if __name__ == '__main__':
 
     shouldFollowMe = Shared(False)
 
-    _thread.start_new_thread(RunModel, (uav, 0, shouldFollowMe)) #span hand gesture recognition
-    _thread.start_new_thread(init, (uav, shouldFollowMe)) #span follow me 
+    t1 = Thread(target=RunModel, args=(uav, 0, shouldFollowMe))
+    t1.start()
+
+
+    t2 = Thread(target=init, args=(uav, shouldFollowMe))
+    t2.start()
+
+    t1.join()
+    t2.join()
