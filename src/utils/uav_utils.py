@@ -17,7 +17,7 @@ def connect_uav():
         raise 
 
 
-def manual_control(self, uav, shouldFollowMe, command):
+def manual_control(uav, shouldFollowMe, command):
     ## Add State Machine here
     # Gesture code to be used:
     # gesture_categories = [
@@ -43,14 +43,25 @@ def manual_control(self, uav, shouldFollowMe, command):
     #     'bow',
     #     'No gesture'
     # ]
+    i = 0
     while True:
-        val = command.get()
         time.sleep(0.1)
-        print(val)
+        val = command.get()
+        i += 1
+    
+        if i % 10 == 1:
+            print(val)
+        
         if val == '3':
-            uav.takeoff()
+            try:
+                uav.takeoff()
+            except:
+                pass
         elif val == '2':
-            uav.land() 
+            try:
+                uav.land()
+            except:
+                pass 
         elif val == '1':
             # add code here to detect if the drone has taken off or not:
             shouldFollowMe.set(True)

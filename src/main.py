@@ -9,17 +9,21 @@ from utils.shared_variable import Shared
 
 
 if __name__ == '__main__':
-    # Connect to Tello drone
-    uav = connect_uav()
+    try:
+        # Connect to Tello drone
+        uav = connect_uav()
 
-    shouldFollowMe = Shared(False)
+        shouldFollowMe = Shared(False)
 
-    t1 = Thread(target=RunModel, args=(uav, shouldFollowMe))
-    t1.start()
+        t1 = Thread(target=RunModel, args=(uav, shouldFollowMe))
+        t1.start()
 
 
-    t2 = Thread(target=init, args=(uav, shouldFollowMe))
-    t2.start()
+        # t2 = Thread(target=init, args=(uav, shouldFollowMe))
+        # t2.start()
 
-    t1.join()
-    t2.join()
+        t1.join()
+    except:
+        uav.land()
+        pass
+    # t2.join()

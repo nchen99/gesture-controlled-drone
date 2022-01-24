@@ -6,7 +6,7 @@ sys.path.append("..")
 
 from inference_filters.DecisionFilter import DecisionFilter
 from model_processors.FaceDetectionProcessor import sigmoid, yolo_head, yolo_correct_boxes, yolo_boxes_and_scores, nms, yolo_eval, get_box_img
-from TelloPIDController import TelloPIDController
+from pid_controllers.TelloPIDController import TelloPIDController
 
 class PIDFaceTracker(TelloPIDController):
     """
