@@ -9,46 +9,49 @@ from queue import Queue
 
 from utils.uav_utils import  manual_control
 from utils.params import params
+from utils.models_info import models_info
 # from atlas_utils.presenteragent import presenter_channel
 from atlas_utils.acl_image import AclImage
+from utils.shared_variable import Shared
 
 class LiveRunner:
     """
     Responsibile for starting stream, capturing frame, starting subprocess
     """
-    def __init__(self, uav):
+    def __init__(self, uav, model_number, shouldFollowMe):
         self.uav = uav
-        self.model_params = params["task"]["classification"]["gesture_yuv"]
+        self.model_number = model_number
+        self.model_params = params["task"][models_info[self.model_number][0]][models_info[self.model_number][1]]
         self.uav_presenter_conf = params["presenter_server_conf"]
-        self.beforeCommand = "0"
-        self.command = "No gesture"
-        self.queue = Queue()
+        self.shouldFollowMe = shouldFollowMe
+        self.command = Shared("undefined")
 
     def init_model_processor(self):
         # Initialize ModuleProcessor based on params[model]
-        self._model_processor = import_module(f"model_processors.HandGestureProcessor")
+        self._model_processor = import_module(models_info[self.model_number][2])
         self._model_processor = getattr(self._model_processor, "ModelProcessor")
         self.model_processor = self._model_processor(self.model_params)
 
     def init_presenter_channel(self):
-        chan = presenter_channel.open_channel(self.uav_presenter_conf)
-        if chan is None:
-            print("Open presenter channel failed")
-            return
+        # chan = presenter_channel.open_channel(self.uav_presenter_conf)
+        # if chan is None:
+        #     print("Open presenter channel failed")
+        #     return
+        pass
 
     def engage_manual_control(self):
         # start new thread for manual control
         try:
-            _thread.start_new_thread(manual_control, (self.uav, self.queue))
+            _thread.start_new_thread(manual_control, (self.uav, self.shouldFollowMe, self.command))
         except:
             print("Error: unable to start thread")
 
-    def getCommand(self):
-        if self.beforeCommand != self.command:
-            self.beforeCommand = self.command
-            self.queue.put(self.command)
-        print(self.command)
-        return self.command
+    # def getCommand(self):
+    #     if self.beforeCommand != self.command:
+    #         self.beforeCommand = self.command
+    #         self.queue.put(self.command)
+    #     print(self.command)
+    #     return self.command
 
     def display_result(self):
         self.init_model_processor()
@@ -75,8 +78,8 @@ class LiveRunner:
             ## Model Prediction ##
             
             try:
-                result_img, self.command = self.model_processor.predict(frame_org)
-                self.getCommand()
+                result_img, gesture = self.model_processor.predict(frame_org)
+                self.command.set(gesture)
 
                 """ Display inference results and send to presenter channel """
                 _, jpeg_image = cv2.imencode('.jpg', result_img)

@@ -1,6 +1,7 @@
 from djitellopy import Tello
 from curtsies import Input
-from queue import Queue
+from utils.shared_variable import Shared
+import time
 
 def connect_uav():
     print("\n################################################################################")
@@ -16,7 +17,7 @@ def connect_uav():
         raise 
 
 
-def manual_control(uav, q):
+def manual_control(self, uav, shouldFollowMe, command):
     ## Add State Machine here
     # Gesture code to be used:
     # gesture_categories = [
@@ -43,9 +44,16 @@ def manual_control(uav, q):
     #     'No gesture'
     # ]
     while True:
-        val = q.get()
+        val = command.get()
+        time.sleep(0.1)
         print(val)
-        # if val == '3':
-        #     uav.takeoff()
-        # elif val == '2':
-        #     uav.land() 
+        if val == '3':
+            uav.takeoff()
+        elif val == '2':
+            uav.land() 
+        elif val == '1':
+            # add code here to detect if the drone has taken off or not:
+            shouldFollowMe.set(True)
+        elif val == '0':
+            shouldFollowMe.set(False)
+            
