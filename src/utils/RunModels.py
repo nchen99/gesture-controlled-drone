@@ -1,8 +1,5 @@
-import _thread
-from multiprocessing import shared_memory
 import time
 from utils.RunLive import LiveRunner
-from utils.shared_variable import Shared
 
 def RunModel(self, uav, model_number, shouldFollowMe):
 

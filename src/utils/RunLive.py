@@ -9,7 +9,6 @@ from queue import Queue
 
 from utils.uav_utils import  manual_control
 from utils.params import params
-from utils.models_info import models_info
 # from atlas_utils.presenteragent import presenter_channel
 from atlas_utils.acl_image import AclImage
 from utils.shared_variable import Shared
@@ -21,14 +20,14 @@ class LiveRunner:
     def __init__(self, uav, model_number, shouldFollowMe):
         self.uav = uav
         self.model_number = model_number
-        self.model_params = params["task"][models_info[self.model_number][0]][models_info[self.model_number][1]]
+        self.model_params = params["task"]["classification"]["gesture_yuv"]
         self.uav_presenter_conf = params["presenter_server_conf"]
         self.shouldFollowMe = shouldFollowMe
         self.command = Shared("undefined")
 
     def init_model_processor(self):
         # Initialize ModuleProcessor based on params[model]
-        self._model_processor = import_module(models_info[self.model_number][2])
+        self._model_processor = import_module(f"model_processors.HandGestureProcessor")
         self._model_processor = getattr(self._model_processor, "ModelProcessor")
         self.model_processor = self._model_processor(self.model_params)
 
