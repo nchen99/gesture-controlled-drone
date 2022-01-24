@@ -1,7 +1,7 @@
 import time
 from utils.RunLive import LiveRunner
 
-def RunModel(self, uav, model_number, shouldFollowMe):
+def RunModel(uav, model_number, shouldFollowMe):
 
         runner = LiveRunner(uav, model_number, shouldFollowMe)
         # needed to fully connect to presenter server?

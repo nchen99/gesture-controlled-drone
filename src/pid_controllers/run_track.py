@@ -86,7 +86,7 @@ def send_to_presenter_server(chan, frame_org, result_img):
     chan.send_detection_data(frame_org.shape[0], frame_org.shape[1], jpeg_image, [])
 
 
-def init(self, uav, shouldFollowMe):
+def init(uav, shouldFollowMe):
     args = parser()
 
     if args.use_ps:
