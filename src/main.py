@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     shouldFollowMe = Shared(False)
 
-    t1 = Thread(target=RunModel, args=(uav, 0, shouldFollowMe))
+    t1 = Thread(target=RunModel, args=(uav, shouldFollowMe))
     t1.start()
 
 

@@ -17,9 +17,8 @@ class LiveRunner:
     """
     Responsibile for starting stream, capturing frame, starting subprocess
     """
-    def __init__(self, uav, model_number, shouldFollowMe):
+    def __init__(self, uav, shouldFollowMe):
         self.uav = uav
-        self.model_number = model_number
         self.model_params = params["task"]["classification"]["gesture_yuv"]
         self.uav_presenter_conf = params["presenter_server_conf"]
         self.shouldFollowMe = shouldFollowMe
