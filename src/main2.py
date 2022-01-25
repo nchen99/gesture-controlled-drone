@@ -72,12 +72,30 @@ if __name__ == "__main__":
     hand = HandGestureProcessor(params["task"]["classification"]["gesture_yuv"], _acl_resource)
 
     state = State.INITIAL
+
+    # cur = time.process_time()
+    # time.sleep(3)
+    # threadshold = time.process_time() - cur
+
     while True:
         func = state_to_func.get(state)
         if func is not None:
             func(tello, face)
+
+
         frame = tello.get_frame_read().frame
         command = hand.predict(frame)
+
+        
+
+        if state == State.LAND_CONFIRM or state == State.TAKEOFF_CONFIRM:
+            start = time.time()
+            while time.time() - start < 10:
+                frame = tello.get_frame_read().frame
+                command = hand.predict(frame)
+                if command == "2":
+                    break
+        
         state = get_next_state(state, command)
         # if state == State.TAKEOFF_CONFIRM:
             
