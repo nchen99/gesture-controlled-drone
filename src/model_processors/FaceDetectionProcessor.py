@@ -41,27 +41,27 @@ class ModelProcessor(BaseProcessor):
         self.anchors = self.get_anchors()
         
     def release_acl(self):
-        print("acl resource release all resource")
+        # print("acl resource release all resource")
         resource_list.destroy()
         if self._acl_resource.stream:
-            print("acl resource release stream")
+            # print("acl resource release stream")
             acl.rt.destroy_stream(self._acl_resource.stream)
 
         if self._acl_resource.context:
-            print("acl resource release context")
+            # print("acl resource release context")
             acl.rt.destroy_context(self._acl_resource.context)
 
-        print("Reset acl device ", self._acl_resource.device_id)
+        # print("Reset acl device ", self._acl_resource.device_id)
         acl.rt.reset_device(self._acl_resource.device_id)
         acl.finalize()
-        print("Release acl resource success")
+        # print("Release acl resource success")
 
     def predict(self, frame):
         preprocessed = self.preprocess(frame)
         outputs = self.model.execute([preprocessed])
-        postprocess_start = time.process_time()
+        #postprocess_start = time.process_time()
         result = self.postprocess(frame, outputs)
-        print(f"@predict.postprocess = {time.process_time() - postprocess_start}")
+        ## print(f"@predict.postprocess = {time.process_time() - postprocess_start}")
         return result
 
     def preprocess(self, frame):
@@ -76,22 +76,22 @@ class ModelProcessor(BaseProcessor):
         return img_new
         
     def postprocess(self, frame, outputs):
-        yolo_eval_start = time.process_time()
+        # yolo_eval_start = time.process_time()
         box_axis, box_score = yolo_eval(
             outputs, self.anchors, self.num_classes, self.image_shape)
-        yolo_eval_end = time.process_time() - yolo_eval_start
-        nparryList, boxList = get_box_img(frame, box_axis)
+        # yolo_eval_end = time.process_time() - yolo_eval_start
+        boxList = get_box_img(frame, box_axis)
 
-        if len(nparryList) > 0:
-            for box in boxList:
-                cv2.rectangle(frame, (box[0], box[2]),  (box[1], box[3]), (255, 0, 0), 4) 
+        # if len(nparryList) > 0:
+        #     for box in boxList:
+        #         cv2.rectangle(frame, (box[0], box[2]),  (box[1], box[3]), (255, 0, 0), 4) 
 
-        print(f"\n####################################################################")
-        print(f"@postprocess.yolo_eval process duration = {round(yolo_eval_end, 3)}")
+        # print(f"\n####################################################################")
+        # print(f"@postprocess.yolo_eval process duration = {round(yolo_eval_end, 3)}")
         # print(f"@postprocess:getbox process duration = {round(getbox_end, 3)}")
         # print(f"@postprocess:forloop process duration = {round(forloop_end, 3)}")
 
-        return frame, yolo_eval_end, boxList
+        return frame, boxList
     
     def get_anchors(self):
         """return anchors
@@ -195,10 +195,10 @@ def yolo_boxes_and_scores(feats, anchors, num_classes, input_shape, image_shape)
 
 def nms(bounding_boxes, confidence_score, threshold):
     """non maximum suppression for filter boxes"""
-    print(f"\n@predict.postprocess.yolo_eval.nms analysis") 
+    # print(f"\n@predict.postprocess.yolo_eval.nms analysis") 
     # If no bounding boxes, return empty list
     if len(bounding_boxes) == 0:
-        print("\t@nms: returns empty list")
+        # print("\t@nms: returns empty list")
         return [], []
 
     def_var_start = time.process_time()
@@ -223,7 +223,7 @@ def nms(bounding_boxes, confidence_score, threshold):
     keep = []
 
     def_var_end = time.process_time() - def_var_start
-    print(f"\t@nms: define variables (bbox, area, etc duration: {def_var_end}")
+    # print(f"\t@nms: define variables (bbox, area, etc duration: {def_var_end}")
 
     while_loop_start = time.process_time()
     # Iterate bounding boxes
@@ -249,7 +249,7 @@ def nms(bounding_boxes, confidence_score, threshold):
         order = order[inds + 1]
 
     while_loop_end = time.process_time() - while_loop_start
-    print(f"\t@nms: whileloop bbox iteration: {while_loop_end}")
+    # print(f"\t@nms: whileloop bbox iteration: {while_loop_end}")
 
     picked_boxes = [bounding_boxes[i] for i in keep]
     if not score.shape:
@@ -273,7 +273,7 @@ def yolo_eval(yolo_outputs, anchors, num_classes, image_shape, score_threshold=.
     Returns:
         predicted boxes axis and corresponding scores
     """
-    print("\n@postprocess:yolo_eval analysis:")
+    # print("\n@postprocess:yolo_eval analysis:")
 
     num_layers = len(yolo_outputs)
     anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
@@ -291,7 +291,7 @@ def yolo_eval(yolo_outputs, anchors, num_classes, image_shape, score_threshold=.
         boxes.append(_boxes)
         box_scores.append(_box_scores)
     num_layer_end = time.process_time() - num_layer_start
-    print(f"\t@yolo_eval:forloop process duration: {num_layer_end}")
+    # print(f"\t@yolo_eval:forloop process duration: {num_layer_end}")
 
     boxes = np.concatenate(boxes, axis=0)
     box_scores = np.concatenate(box_scores, axis=0)
@@ -304,7 +304,7 @@ def yolo_eval(yolo_outputs, anchors, num_classes, image_shape, score_threshold=.
     nms_start = time.process_time()
     box, score = nms(class_boxes, class_box_scores, iou_threshold)
     nms_end = time.process_time() - num_layer_start
-    print(f"\t@yolo_eval:nms process duration: {nms_end}")
+    # print(f"\t@yolo_eval:nms process duration: {nms_end}")
 
 
     return box, score
@@ -323,7 +323,7 @@ def get_box_img(image, box_axis):
         nparryList: head area 
         boxList: location in the source image
     """
-    nparryList = []
+    # nparryList = []
     boxList = []
 
     for i in range(len(box_axis)):
@@ -343,7 +343,8 @@ def get_box_img(image, box_axis):
 
         boxList.append([left_modified, right_modified,
                        top_modified, bottom_modified])
-        nparryList.append(
-            image[top_modified:bottom_modified, left_modified:right_modified])
+        # nparryList.append(
+        #     image[top_modified:bottom_modified, left_modified:right_modified])
 
-    return nparryList, boxList
+    # return nparryList, boxList
+    return boxList
