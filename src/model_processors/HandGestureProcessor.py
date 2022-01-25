@@ -49,8 +49,8 @@ class ModelProcessor(BaseProcessor):
         'No gesture'
     ]
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, params, ACL):
+        super().__init__(params, ACL)
         self._dvpp = Dvpp(self._acl_resource)
         if not os.path.exists("../data/gesture_yuv"):
             os.mkdir("../data/gesture_yuv")

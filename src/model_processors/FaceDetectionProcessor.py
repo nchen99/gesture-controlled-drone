@@ -24,8 +24,8 @@ from atlas_utils.resource_list import resource_list
 
 
 class ModelProcessor(BaseProcessor):
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, params, ACL):
+        super().__init__(params, ACL)
         
         # parameters for preprocessing
         self.ih, self.iw = (params['camera_height'], params['camera_width'])
@@ -59,7 +59,6 @@ class ModelProcessor(BaseProcessor):
     def predict(self, frame):
         preprocessed = self.preprocess(frame)
         outputs = self.model.execute([preprocessed])
-        
         postprocess_start = time.process_time()
         result = self.postprocess(frame, outputs)
         print(f"@predict.postprocess = {time.process_time() - postprocess_start}")
@@ -92,7 +91,7 @@ class ModelProcessor(BaseProcessor):
         # print(f"@postprocess:getbox process duration = {round(getbox_end, 3)}")
         # print(f"@postprocess:forloop process duration = {round(forloop_end, 3)}")
 
-        return frame, yolo_eval_end
+        return frame, yolo_eval_end, boxList
     
     def get_anchors(self):
         """return anchors
