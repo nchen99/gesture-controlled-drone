@@ -17,18 +17,19 @@ class LiveRunner:
     """
     Responsibile for starting stream, capturing frame, starting subprocess
     """
-    def __init__(self, uav, shouldFollowMe):
+    def __init__(self, uav, shouldFollowMe, _acl_resource):
         self.uav = uav
         self.model_params = params["task"]["classification"]["gesture_yuv"]
         self.uav_presenter_conf = params["presenter_server_conf"]
         self.shouldFollowMe = shouldFollowMe
         self.command = Shared("undefined")
+        self._acl_resource = _acl_resource
 
     def init_model_processor(self):
         # Initialize ModuleProcessor based on params[model]
         self._model_processor = import_module(f"model_processors.HandGestureProcessor")
         self._model_processor = getattr(self._model_processor, "ModelProcessor")
-        self.model_processor = self._model_processor(self.model_params)
+        self.model_processor = self._model_processor(self.model_params, self._acl_resource)
 
     def init_presenter_channel(self):
         # chan = presenter_channel.open_channel(self.uav_presenter_conf)

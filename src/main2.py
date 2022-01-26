@@ -1,3 +1,4 @@
+# from tkinter import N
 from utils.params import params
 from model_processors.FaceDetectionProcessor import ModelProcessor as FaceDetectionProcessor
 from model_processors.HandGestureProcessor import ModelProcessor as HandGestureProcessor
@@ -7,7 +8,11 @@ import time
 from enum import Enum
 import cv2
 from djitellopy import Tello
-from datetime import datetime
+from utils.shared_variable import Shared
+from threading import Thread
+from pid_controllers.run_track import init
+
+shouldFollowMe: Shared
 
 class State(Enum):
     INITIAL = 1
@@ -30,34 +35,68 @@ def get_next_state(state, command):
     elif state == State.TAKEOFF:
         return State.FLOAT
     elif state == State.FLOAT:
-        return State.LAND_CONFIRM if command == "1" else State.FLOAT
+        if command == "1":
+            return State.LAND_CONFIRM
+            
+        elif command == "3":
+            return State.FOLLOW_ME_CONFIRM
+        elif command == "4":
+            return State.TAKE_A_PICTURE_CONFIRM
+        else:
+            return State.FLOAT
     elif state == State.LAND_CONFIRM:
-        return State.LAND if command == "2" else State.FLOAT
+        return State.LAND if command == "2" else State.LAND_CONFIRM
     elif state == State.LAND:
         return State.INITIAL
+    elif state == State.FOLLOW_ME_CONFIRM:
+        return State.FOLLOW_ME if command == "2" else State.FLOAT
+    elif state == State.FOLLOW_ME:
+        return State.STOP if command == "3" else State.FOLLOW_ME
+    elif state == State.STOP:
+        return State.FLOAT if command == "2" else State.FOLLOW_ME
+    elif state == State.TAKE_A_PICTURE_CONFIRM:
+        return State.TAKE_A_PICTURE if command == "2" else State.FLOAT
+    elif state == State.TAKE_A_PICTURE:
+        return State.FLOAT
     else:
         print(state)
         return state
 
-def takeoff(tello, face):
+def takeoff(tello, _):
     tello.takeoff()
+    pass
 
-def land(tello, face):
+def land(tello, _):
     tello.land()
+    pass
 
-def follow_me(tello, face):
+def follow_me(_, shouldFollowMe):
     print("I am in follow me.")
+    shouldFollowMe.set(True)
     time.sleep(1)
 
-def take_picture(tello, face):
+def take_picture(tello, _):
+    print("I am in taking pictures mode.")
     frame = tello.get_frame_read().frame
     cv2.imwrite("./picture.jpeg", frame)
+
+def floating(_, shouldFollowMe):
+    shouldFollowMe.set(False)
 
 
 state_to_func = {
     State.TAKEOFF: takeoff,
     State.LAND: land,
+    State.FOLLOW_ME: follow_me,
+    State.TAKE_A_PICTURE: take_picture,
+    State.FLOAT: floating,
 }
+
+# tello = Tello()
+# tello.connect()
+# tello.takeoff()
+# time.sleep(10)
+# tello.land()
 
 if __name__ == "__main__":
     tello = Tello()
@@ -65,43 +104,66 @@ if __name__ == "__main__":
     print(tello.get_battery(), "\n\n\n")
     tello.streamon()
 
-    _acl_resource = AclResource()
-    _acl_resource.init()
 
-    face = FaceDetectionProcessor(params["task"]["object_detection"]["face_detection"], _acl_resource)
-    hand = HandGestureProcessor(params["task"]["classification"]["gesture_yuv"], _acl_resource)
+    # while True:
+    frame = tello.get_frame_read().frame
+        
+
+    # while True:
+        # try:
+        #     frame = tello.get_frame_read().frame
+        #     cv2.imshow("drone", frame)
+        #     cv2.waitKey(1)
+        # except:
+        #     pass
+
+    # _acl_resource = AclResource()
+    # _acl_resource.init()
+
+    shouldFollowMe = Shared(False)
+
+    t1 = Thread(target=init, args=(tello, shouldFollowMe))
+    t1.start()
+
+    # face = FaceDetectionProcessor(params["task"]["object_detection"]["face_detection"], _acl_resource)
+    # hand = HandGestureProcessor(params["task"]["classification"]["gesture_yuv"], _acl_resource)
 
     state = State.INITIAL
 
     # cur = time.process_time()
     # time.sleep(3)
     # threadshold = time.process_time() - cur
-
+    # command = 
     while True:
-        func = state_to_func.get(state)
-        if func is not None:
-            func(tello, face)
+        try: 
 
 
-        frame = tello.get_frame_read().frame
-        command = hand.predict(frame)
+            func = state_to_func.get(state)
+            if func is not None:
+                print("Executing function related to state ", state)
+                func(tello, shouldFollowMe)
 
-        
-
-        if state == State.LAND_CONFIRM or state == State.TAKEOFF_CONFIRM:
-            start = time.time()
-            while time.time() - start < 10:
-                frame = tello.get_frame_read().frame
-                command = hand.predict(frame)
-                if command == "2":
-                    break
-        
-        state = get_next_state(state, command)
-        # if state == State.TAKEOFF_CONFIRM:
+            if state == State.LAND_CONFIRM or state == State.TAKEOFF_CONFIRM:
+                start = time.time()
+                print(f"Entering state {state}, waiting to confirm...")
+                while time.time() - start < 10:
+                    command = input("show the camera your body pose: ")
+                    if command == "2":
+                        print("Confirmed")
+                        state = get_next_state(state, command)
+                        print(state)
+                        break
+            
+            
+            else:
+                command = input("show the camera your body pose: ")
+                state = get_next_state(state, command)
+                print(state)
+            # if state == State.TAKEOFF_CONFIRM:
             
 
-        # print(command, state)
-        time.sleep(0.5)
-
-
-    face.release_acl()
+        except KeyboardInterrupt as e:
+            # face.released_acl()
+            tello.land()
+            tello.streamoff()
+            t1.join()
