@@ -71,18 +71,18 @@ class TelloPIDController:
         inference_filter = Filter(**kwargs)
         return inference_filter
 
-    def init_uav(self):
+    def init_uav(self, uav):
         """Initiate closed-loop tracking sequence, drone takeoff and parallelize streaming and control
         Returns
             None
         """
         try:
-            self.uav = Tello()
-            self.uav.connect()
-            print("UAV connected successfully!")
-            print(f"Current battery percentage: {self.uav.get_battery()}")
-            self.uav.streamoff()
-            self.uav.streamon()   
+            self.uav = uav
+            # self.uav.connect()
+            # print("UAV connected successfully!")
+            # print(f"Current battery percentage: {self.uav.get_battery()}")
+            # self.uav.streamoff()
+            # self.uav.streamon()   
         except Exception as e:
             raise Exception("Failed to connect to Tello UAV, please try to reconnect")
 

@@ -62,26 +62,35 @@ def get_next_state(state, command):
         print(state)
         return state
 
-def takeoff(tello, _):
+def takeoff(tello, shouldFollowMe):
     tello.takeoff()
-    pass
 
-def land(tello, _):
+def land(tello, shouldFollowMe):
     tello.land()
-    pass
 
+
+following = False
 def follow_me(_, shouldFollowMe):
-    print("I am in follow me.")
-    shouldFollowMe.set(True)
-    time.sleep(1)
+    global following
+    if not following:
+        print("I am in follow me.")
+        shouldFollowMe.set(True)
+        time.sleep(1)
+        following = True
+
+def floating(_, shouldFollowMe):
+    global following
+    if following:
+        shouldFollowMe.set(False)
+        following = False
 
 def take_picture(tello, _):
     print("I am in taking pictures mode.")
     frame = tello.get_frame_read().frame
     cv2.imwrite("./picture.jpeg", frame)
 
-def floating(_, shouldFollowMe):
-    shouldFollowMe.set(False)
+
+
 
 
 state_to_func = {
