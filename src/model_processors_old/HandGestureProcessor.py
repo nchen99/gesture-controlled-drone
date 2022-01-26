@@ -46,11 +46,11 @@ class ModelProcessor(BaseProcessor):
         'stop',
         'Give the middle finger',
         'bow',
-        'No gesture'
+        'k'
     ]
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, params, ACL):
+        super().__init__(params, ACL)
         self._dvpp = Dvpp(self._acl_resource)
         if not os.path.exists("../data/gesture_yuv"):
             os.mkdir("../data/gesture_yuv")
@@ -64,26 +64,28 @@ class ModelProcessor(BaseProcessor):
         return resized_image
 
     def postprocess(self, infer_output, origin_img):
-        data = infer_output[0]
-        vals = data.flatten()
-        top_k = vals.argsort()[-1:-2:-1]
-        if len(top_k):
-            object_class = self.get_gesture_categories(top_k[0])
-            origin_img = Image.fromarray(origin_img)
-            draw = ImageDraw.Draw(origin_img)
-            font = ImageFont.load_default()
-            draw.text((10, 50), object_class, font=font, fill=255)
-            return np.array(origin_img), object_class
+        for data in infer_output:
+            vals = data.flatten()
+            top_k = vals.argsort()[-1:-2:-1]
+            if len(top_k):
+                object_class = self.get_gesture_categories(top_k[0])
+                # origin_img = Image.fromarray(origin_img)
+                # draw = ImageDraw.Draw(origin_img)
+                # font = ImageFont.load_default()
+                # draw.text((10, 50), object_class, font=font, fill=255)
+                # return np.array(origin_img), object_class
+                if object_class != 'k':
+                    return object_class
 
-        return np.array(origin_img), "No gesture"
+        # return np.array(origin_img), "No gesture"
+        return "No gesture"
     
     def predict(self, frame):
         cv2.imwrite(self._tmp_file, frame)
         self._acl_image = AclImage(self._tmp_file)
         resized_image = self.preprocess(self._acl_image)
         infer_out = self.model.execute([resized_image,])
-        result, command = self.postprocess(infer_out, frame)
-        return result, command
+        return self.postprocess(infer_out, frame)
 
     def get_gesture_categories(self, gesture_id):
         if gesture_id >= len(ModelProcessor.gesture_categories):

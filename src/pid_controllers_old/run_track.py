@@ -59,10 +59,10 @@ def _init_filter(filter_name, **kwargs):
     filter_class =  getattr(inference_filter_module, filter_name)
     return filter_class(**kwargs)
 
-def initialize_tracker(args):
+def initialize_tracker(args, uav):
     inference_filter = _init_filter(filter_name=args.inference_filter, fps=args.if_fps, window=args.if_window)
     tracker = _init_tracker(tracker_name=args.tracker, pid=args.pid, inference_filter=inference_filter)
-    tracker.init_uav()
+    tracker.init_uav(uav)
     return tracker
 
 def parser():
@@ -85,30 +85,23 @@ def send_to_presenter_server(chan, frame_org, result_img):
     jpeg_image = AclImage(jpeg_image, frame_org.shape[0], frame_org.shape[1], jpeg_image.size)
     chan.send_detection_data(frame_org.shape[0], frame_org.shape[1], jpeg_image, [])
 
-if __name__ == "__main__":
+
+def init(uav, shouldFollowMe):
     args = parser()
 
     if args.use_ps:
         chan = init_presenter_server()
 
     x_err, y_err = 0, 0
-    tookoff, flight_end = False, False
-    timeout = time.time() + args.duration
 
-    tracker = initialize_tracker(args)
+    tracker = initialize_tracker(args, uav)
 
-    while not flight_end:
+    while True:
+        if not shouldFollowMe.get():
+            time.sleep(0.1)
+            continue
+        print("awesome")
         try:
-            if not tookoff:
-                tookoff = True
-                tracker.uav.takeoff()
-                tracker.uav.move_up(70)
-            
-            if time.time() > timeout:        
-                tracker.uav.land()
-                tracker.uav.streamoff()
-                flight_end = True
-            
             frame_org = tracker.fetch_frame()
             x_err, y_err, result_img = tracker.run_state_machine(frame_org, x_err, y_err)
 

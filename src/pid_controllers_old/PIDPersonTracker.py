@@ -4,46 +4,18 @@ import numpy as np
 
 sys.path.append("..")
 
-from inference_filters.DecisionFilter import DecisionFilter
-from model_processors.FaceDetectionProcessor import sigmoid, yolo_head, yolo_correct_boxes, yolo_boxes_and_scores, nms, yolo_eval, get_box_img
+from DecisionFilter import DecisionFilter
 from TelloPIDController import TelloPIDController
 
-class PIDFaceTracker(TelloPIDController):
-    """
-    Closed-Loop Face Detection + Tracking System
-    Control relies on feedback from in a closed-loop manner - enable drone to automatically adjust itself without user intervention to detect and track a 
-    person's face
-
-    :class:
-        PIDTracker uses proportional integral derivative to enable continuous modulated control inherited from TelloPIDController class
-    :params:
-        + pid               - List(Floats); A list of three floating values that corresponds to proportional, integral and derivative
-        + inference_filter  - Class:Filter; Inference result filter to smooth the model's inference results
-        + if_fps            - Int; Argument for inference_filter class, rate of incomimg frames
-        + if_window         - Int; Argument for inference_filter class, period of observation (in seconds) 
-        + save_flight_hist  - Bool; Save flight statistics if True
-    Returns
-        None  
-    """
+class PIDPersonTracker(TelloPIDController):
     def __init__(self, pid, inference_filter=DecisionFilter, save_flight_hist=False):
         super().__init__(pid, save_flight_hist)
-        self.model_processor = self._load_mp("face_detection")
+        self.model_processor = self._load_mp("yolov3")
         self.inference_filter = inference_filter    # A fully instantiated InferenceFilter object  
-        self.setpoint_area = (20000, 100000)        # Lower and Upper bound for Forward&Backward Range-of-Motion - can be adjusted    
+        self.setpoint_area = (150000, 200000)        # Lower and Upper bound for Forward&Backward Range-of-Motion - can be adjusted    
         self.save_flight_hist = save_flight_hist
-
-    def _get_feedback(self, frame):
-        """Obtains feedback (inference result) from model. Preprocess and execute the model using ModelProcessor.  
-        :param:
-            + frame - ndarray; input frame for inference
-        Returns
-            Model's inference output (i.e: a list containing inference information such as bbox, num_detections, etc.)
-        """
-        preprocessed = self.model_processor.preprocess(frame)
-        infer_output = self.model_processor.model.execute([preprocessed])
-        return infer_output
            
-    def _unpack_feedback(self, infer_output, frame):
+    def _unpack_feedback(self, infer_output, frame, toi="person"):
         """ Extract Process Variables from model's inference output info of input frame. The largest bbox of the same ToI label will be marked as ToI
         :params:
             infer_output - model's inference result from executing model on a frame
@@ -54,36 +26,50 @@ class PIDFaceTracker(TelloPIDController):
             process_var_bbox    - Process Variable - ToI's bbox area
             result_img   - inference result superimposed on original frame
         """
+        box_num = infer_output[1][0, 0]
+        box_info = infer_output[0].flatten()
+        scale = max(frame.shape[1] / self.model_processor._model_width, frame.shape[0] / self.model_processor._model_height)
+        
+        # Iterate the detected boxes and look for label that matches ToI with the largest bbox area
         process_var_bbox_area = 0
         process_var_bbox_center = None
 
-        box_axis, box_score = yolo_eval(
-            infer_output, self.model_processor.anchors, self.model_processor.num_classes, self.model_processor.image_shape)
-        nparryList, boxList = get_box_img(frame, box_axis)
-        if len(nparryList) > 0:
-            for box in boxList:
-                cx = (box[0] + box[1]) // 2
-                cy = (box[2] + box[3]) // 2
+        for n in range(int(box_num)):
+            ids = int(box_info[5 * int(box_num) + n])
+            label = self.model_processor.labels[ids]
+
+            if label == toi:
+                score = box_info[4 * int(box_num)+n]
+                top_left_x = int(box_info[0 * int(box_num)+n] * scale)
+                top_left_y = int(box_info[1 * int(box_num)+n] * scale)
+                bottom_right_x = int(box_info[2 * int(box_num) + n] * scale)
+                bottom_right_y = int(box_info[3 * int(box_num) + n] * scale)
+                cx = (top_left_x + bottom_right_x) // 2
+                cy = (top_left_y + bottom_right_y) // 2
                 center = (cx, cy)
-                area = (box[1] - box[0]) * (box[3] - box[2])
+                area = (bottom_right_x - top_left_x) * (bottom_right_y - top_left_y)
+
                 if area > process_var_bbox_area:
                     process_var_bbox_area = area
                     process_var_bbox_center = center
 
-                    cv2.rectangle(frame, (box[0], box[2]),  (box[1], box[3]), (255, 0, 0), 4)
-
+                    cv2.rectangle(frame, (top_left_x, top_left_y), (bottom_right_x, bottom_right_y), (0,0,255), 2)
+                    cv2.circle(frame, center, 1, (0,0,255), -1)
+        
         return frame, (process_var_bbox_area, process_var_bbox_center)
-    
+
     def _pid_controller(self, process_vars, prev_x_err, prev_y_err):
         """Closed-Loop PID Object Tracker (Compensator + Actuator)
         Calculates the Error value from Process variables and compute the require adjustment for the drone. 
-
-        Process Variable Area - for calculating the distance between drone and ToI; Info obtained from inference bbox; adjusts forward and backward motion of drone
+        XY error is error between setpoint (frame center) and process_var_bbox_center
+        Process Variable Area - for calculating the distance between drone and ToI (if it is over 80% of frame, then drone needs to move back)
+                    Info obtained from inference bbox
+                    + forward and backward motion of drone
         Process Variable center - for calculating how much to adjust the camera angle and altitude of drone
-                    x_err: YAW angle rotation
-                    y_err: elevation to eye-level (NotImplemented)
+                    x_err: angle rotation
+                    y_err: elevation to eye-level
         :params:
-            + process_vars - Tuple(process variables bbox area and process variable bbox center from unpacking feedback)
+            + process_vars - Tuple(process variables bbox area and process variable bbox center)
             + prev_x_err   - x error from previous control loop
             + prev_y_err   - y error from previous control loop
         Returns
@@ -111,7 +97,7 @@ class PIDFaceTracker(TelloPIDController):
 
         # Localization of ToI to the center y-axis - adjust altitude 
         if y_err != 0:
-            up_down_velocity = 3*self._pid(y_err, prev_y_err)
+            up_down_velocity = self._pid(y_err, prev_y_err)
             up_down_velocity = int(np.clip(up_down_velocity, -50, 50))
 
         # Rectify distance between drone and target from bbox area: Adjusts forward and backward motion
@@ -144,12 +130,12 @@ class PIDFaceTracker(TelloPIDController):
         x_err, y_err = self._pid_controller(process_vars, prev_x_err, prev_y_err)
         return x_err, y_err
 
-    def _search(self):
+    def _search(self,):
         """Send RC Controls to drone to try to find ToI"""
-        self.uav.send_rc_control(0,0,0,20)
+        self.uav.send_rc_control(0,0,0,30)
         return
 
-    def _manage_state(self, frame):
+    def _manage_state(self, frame, toi="person"):
         """State Manager
         Infer surroundings to check if ToI is present, pass feedback to Filter to smooth out detection result. Break out of Search Mode 
         and enter Track Mode if ToI is consistently present. Vice versa.
@@ -158,7 +144,7 @@ class PIDFaceTracker(TelloPIDController):
             + toi       - Target-of-Interest, defaults to Person for Person detection
         Returns
             result_img   - inference result superimposed on frame
-            process_vars - Tuple(bbox_area, bbox_center) of process variables
+            process_vars - Tuple() of process variables
         """
         infer_output = self._get_feedback(frame)
         result_img, process_vars = self._unpack_feedback(infer_output, frame)
@@ -181,17 +167,14 @@ class PIDFaceTracker(TelloPIDController):
         if cur_mode != new_mode: 
             print("\n######################################################")
             print(f"Mode switched from {cur_mode} to {new_mode}")
-
-        return result_img, process_vars
     
     def run_state_machine(self, frame, prev_x_err, prev_y_err):
         result_img, process_vars = self._manage_state(frame)
         if self.search_mode:
             self._search()
-            return prev_x_err, prev_y_err, result_img
-        elif self.track_mode:
+            return prev_x_err, prev_y_err
+        if self.track_mode:
             x_err, y_err = self._track(process_vars, prev_x_err, prev_y_err)
-            return x_err, y_err, result_img
-    
-    def __repr__(self):
-        return f"PIDFaceTracker(pid={self.pid}, inference_filter={self.inference_filter})"
+            return x_err, y_err 
+
+ 
