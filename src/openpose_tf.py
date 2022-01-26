@@ -350,6 +350,8 @@ def estimate_paf(peaks, heat_mat, paf_mat):
             human.score = score
             humans.append(human)
 
+
+
     return humans
 
 def draw(img_path, humans):
@@ -394,16 +396,44 @@ model = None
 
 
 class Pose(Enum):
-    NONE = 0
-    A = 1
-    CONFIRM = 2
-    B = 3
-    C = 4
+    KEY_MISSING = -1
+    NONE = 0 # any
+    A = 1 # right arm up
+    CONFIRM = 2 # right hand to shoulder
+    B = 3 # double hand up
+    C = 4 # hand together
+    D = 5 # left hand up
 
 
 #
 def analyze_pose(human):
+    print(human)
+    threshold = 0.02
+    
+    bp = human.body_parts
+
+    try:
+        if (bp[CocoPart.RWrist.value].x - bp[CocoPart.RShoulder.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.RShoulder.value].y) ** 2 < threshold:
+            return Pose.CONFIRM
+
+        if (bp[CocoPart.RWrist.value].x - bp[CocoPart.LWrist.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.LWrist.value].y) ** 2 < threshold:
+            return Pose.C
+
+
+        # Raising hands
+        if bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y:
+            if bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y:
+                return Pose.B
+            else:
+                return Pose.A
+        else:
+            if bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y:
+                return Pose.D
+    except:
+       return Pose.KEY_MISSING
+    
     return Pose.NONE
+
 
 
 def init(model_path):
