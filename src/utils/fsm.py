@@ -1,0 +1,68 @@
+import time
+
+'''
+    This file contains the state declarations and transitions for the finite state machine
+'''
+
+
+# Constants
+STATE_STOP = -1
+STATE_INITIAL = 0
+STATE_TAKEOFF_CONFIRMATION = 1
+STATE_TAKEOFF = 2
+STATE_FLOAT = 3
+STATE_LAND_CONFIRMATION = 4
+STATE_LAND = 5
+STATE_FOLLOW_ME_CONFIRMATION = 6
+STATE_FOLLOW_ME = 7
+STATE_STOP_CONFIRMATION = 8
+STATE_TAKE_PICTURE_CONFIRMATION = 9
+STATE_TAKE_PICTURE = 10
+
+# For display
+states = [
+    "Initial", "Take off confirmation", "Take off", "Float", "Land confirmation", "Land", "Follow me confirmation",
+    "Follow me", "Stop confirmation", "Take picture confirmation", "Take picture"
+]
+
+# TODO change this to the recognized gestures
+GESTURE_AUTO = 0
+GESTURE_ONE = 1
+GESTURE_TWO = 2
+GESTURE_THREE = 3
+GESTURE_FOUR = 4
+GESTURE_TARGET_LOST = -1
+GESTURE_TIMEOUT = -2
+GESTURE_NO_GESTURE = -3
+transitions = {
+    STATE_INITIAL: {GESTURE_ONE: STATE_TAKEOFF_CONFIRMATION},
+    STATE_TAKEOFF_CONFIRMATION: {GESTURE_TWO: STATE_TAKEOFF, GESTURE_TIMEOUT: STATE_INITIAL},
+    STATE_TAKEOFF: {GESTURE_AUTO: STATE_FLOAT},
+    STATE_FLOAT: {
+        GESTURE_THREE: STATE_FOLLOW_ME_CONFIRMATION, GESTURE_ONE: STATE_LAND_CONFIRMATION,
+        GESTURE_FOUR: STATE_TAKE_PICTURE_CONFIRMATION
+    },
+    STATE_LAND_CONFIRMATION: {GESTURE_TWO: STATE_LAND, GESTURE_TIMEOUT: STATE_FLOAT},
+    STATE_LAND: {GESTURE_AUTO: STATE_INITIAL},
+    STATE_FOLLOW_ME_CONFIRMATION: {GESTURE_TWO: STATE_FOLLOW_ME, GESTURE_TIMEOUT: STATE_FLOAT},
+    STATE_FOLLOW_ME: {GESTURE_THREE: STATE_STOP_CONFIRMATION, GESTURE_TARGET_LOST: STATE_FLOAT},
+    STATE_STOP_CONFIRMATION: {GESTURE_TWO: STATE_FLOAT, GESTURE_TIMEOUT: STATE_FOLLOW_ME},
+    STATE_TAKE_PICTURE_CONFIRMATION: {GESTURE_TWO: STATE_TAKE_PICTURE, GESTURE_TIMEOUT: STATE_FLOAT},
+    STATE_TAKE_PICTURE: {GESTURE_AUTO: STATE_FLOAT}
+}
+
+
+def state_init():
+    return STATE_INITIAL
+
+
+def next_state(state, gesture):
+    if GESTURE_AUTO in transitions[state]:
+        return transitions[state][GESTURE_AUTO]
+
+    if gesture in transitions[state]:
+        return transitions[state][gesture]
+    else:
+        return state
+
+
