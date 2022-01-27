@@ -354,8 +354,7 @@ def estimate_paf(peaks, heat_mat, paf_mat):
 
     return humans
 
-def draw(img_path, humans):
-    img = cv2.imread(img_path)
+def draw(img, humans):
     # img = cv2.resize(img, None, fx=1/10, fy=1/10, interpolation=cv2.INTER_AREA)
 
     h, w, _ = img.shape
@@ -364,7 +363,7 @@ def draw(img_path, humans):
         for key, body_part in human.body_parts.items():
             center = (int(w*body_part.x), int(h*body_part.y))
             cv2.circle(img, center, radius=3, thickness=-1, color=color)
-    filename = os.path.basename(img_path)
+    filename = os.path.basename(f"{time.time_ns()}.png")
     cv2.imwrite(f"outputs/{filename}", img)
 
 def post_process(heat):
@@ -398,11 +397,11 @@ model = None
 class Pose(Enum):
     KEY_MISSING = -1
     NONE = 0 # any
-    A = 1 # right arm up
+    RIGHT_ARM_UP = 1 # right arm up
     CONFIRM = 2 # right hand to shoulder
-    B = 3 # double hand up
-    C = 4 # hand together
-    D = 5 # left hand up
+    BOTH_ARM_UP = 3 # double hand up
+    CLAP = 4 # hand together
+    LEFT_ARM_UP = 5 # left hand up
 
 
 #
@@ -417,18 +416,18 @@ def analyze_pose(human):
             return Pose.CONFIRM
 
         if (bp[CocoPart.RWrist.value].x - bp[CocoPart.LWrist.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.LWrist.value].y) ** 2 < threshold:
-            return Pose.C
+            return Pose.CLAP
 
 
         # Raising hands
         if bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y:
             if bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y:
-                return Pose.B
+                return Pose.BOTH_ARM_UP
             else:
-                return Pose.A
+                return Pose.RIGHT_ARM_UP
         else:
             if bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y:
-                return Pose.D
+                return Pose.LEFT_ARM_UP
     except:
        return Pose.KEY_MISSING
     
@@ -454,6 +453,8 @@ def get_pose(img):
     for human in humans:
         results.append(analyze_pose(human))
 
+    
+    draw(img, humans)
     # also include the cordinates? => can keep track of the target when there are multiple humans
     return results
 

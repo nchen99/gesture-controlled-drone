@@ -1,9 +1,9 @@
 import openpose_tf as op
-import cv2 as cv
+import cv2
 op.init(op.MODEL_PATH)
 
 # path_to_vid
-path_to_vid = ""
+path_to_vid = "./assets/testvid.mp4"
 
 cap = cv2.VideoCapture(path_to_vid)
  
