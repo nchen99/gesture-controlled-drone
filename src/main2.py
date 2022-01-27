@@ -2,6 +2,7 @@
 from utils.params import params
 from model_processors.FaceDetectionProcessor import ModelProcessor as FaceDetectionProcessor
 from model_processors.HandGestureProcessor import ModelProcessor as HandGestureProcessor
+from utils.RunLive import LiveRunner
 
 from atlas_utils.acl_resource import AclResource
 import time
@@ -29,7 +30,8 @@ class State(Enum):
 
 def get_next_state(state, command):
     if state == State.INITIAL: 
-        return State.TAKEOFF_CONFIRM if command == "1" else State.INITIAL
+        # return State.TAKEOFF_CONFIRM if command == "1" else State.INITIAL
+        return State.INITIAL
     elif state == State.TAKEOFF_CONFIRM:
         return State.TAKEOFF if command == "2" else State.INITIAL
     elif state == State.TAKEOFF:
@@ -89,7 +91,11 @@ def take_picture(tello, _):
     frame = tello.get_frame_read().frame
     cv2.imwrite("./picture.jpeg", frame)
 
-
+def run_live(tello, shouldFollowMe, _acl_resource):
+    runner = LiveRunner(tello, shouldFollowMe, _acl_resource)
+    # needed to fully connect to presenter server?
+    time.sleep(10)
+    runner.display_result()
 
 
 
@@ -115,7 +121,7 @@ if __name__ == "__main__":
 
 
     # while True:
-    frame = tello.get_frame_read().frame
+    # frame = tello.get_frame_read().frame
         
 
     # while True:
@@ -131,8 +137,20 @@ if __name__ == "__main__":
 
     shouldFollowMe = Shared(False)
 
+    run_live(tello, shouldFollowMe, "random arg") # Third arg should be _acl_resource but doesn't matter?
+
+    # runner = LiveRunner(tello, shouldFollowMe, _acl_resource)
+    # # needed to fully connect to presenter server?
+    # time.sleep(10)
+    # runner.display_result()
+
     t1 = Thread(target=init, args=(tello, shouldFollowMe))
+    # t2 = Thread(target=run_live, args=(tello, shouldFollowMe, "a"))
+    
+    # t2.start()
+    # time.sleep(10)
     t1.start()
+    
 
     # face = FaceDetectionProcessor(params["task"]["object_detection"]["face_detection"], _acl_resource)
     # hand = HandGestureProcessor(params["task"]["classification"]["gesture_yuv"], _acl_resource)
@@ -176,3 +194,4 @@ if __name__ == "__main__":
             tello.land()
             tello.streamoff()
             t1.join()
+            # t2.join()
