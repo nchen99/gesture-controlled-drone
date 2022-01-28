@@ -357,15 +357,15 @@ def estimate_paf(peaks, heat_mat, paf_mat):
 def draw(img, humans):
     # img = cv2.resize(img, None, fx=1/10, fy=1/10, interpolation=cv2.INTER_AREA)
     edges = [
-        (CocoPart.Nose, CocoPart.Neck),
-        (CocoPart.Nose, CocoPart.LEye), (CocoPart.LEye, CocoPart.LEar),
-        (CocoPart.Nose, CocoPart.REye), (CocoPart.REye, CocoPart.REar),
-        (CocoPart.Neck, CocoPart.LShoulder), (CocoPart.Neck, CocoPart.RShoulder),
-        (CocoPart.LShoulder, CocoPart.LElbow), (CocoPart.RShoulder, CocoPart.RElbow),
-        (CocoPart.LElbow, CocoPart.LWrist), (CocoPart.RElbow, CocoPart.RWrist),
-        (CocoPart.Neck, CocoPart.LHip), (CocoPart.Neck, CocoPart.RHip),
-        (CocoPart.LHip, CocoPart.LKnee), (CocoPart.RHip, CocoPart.RKnee),
-        (CocoPart.LKnee, CocoPart.LAnkle), (CocoPart.RKnee, CocoPart.RAnkle)
+        (CocoPart.Nose.value, CocoPart.Neck.value),
+        (CocoPart.Nose.value, CocoPart.LEye.value), (CocoPart.LEye.value, CocoPart.LEar.value),
+        (CocoPart.Nose.value, CocoPart.REye.value), (CocoPart.REye.value, CocoPart.REar.value),
+        (CocoPart.Neck.value, CocoPart.LShoulder.value), (CocoPart.Neck.value, CocoPart.RShoulder.value),
+        (CocoPart.LShoulder.value, CocoPart.LElbow.value), (CocoPart.RShoulder.value, CocoPart.RElbow.value),
+        (CocoPart.LElbow.value, CocoPart.LWrist.value), (CocoPart.RElbow, CocoPart.RWrist.value),
+        (CocoPart.Neck.value, CocoPart.LHip.value), (CocoPart.Neck, CocoPart.RHip.value),
+        (CocoPart.LHip.value, CocoPart.LKnee.value), (CocoPart.RHip, CocoPart.RKnee.value),
+        (CocoPart.LKnee.value, CocoPart.LAnkle.value), (CocoPart.RKnee, CocoPart.RAnkle.value)
     ]
     h, w, _ = img.shape
     for human in humans:
