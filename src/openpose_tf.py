@@ -428,43 +428,43 @@ threshold = 0.01
 check_pose = {
     Pose.CONFIRM: [
         {
-            "req": [CocoPart.RWrist, CocoPart.RShoulder],
+            "req": [CocoPart.RWrist.value, CocoPart.RShoulder.value],
             "check": (lambda bp: (bp[CocoPart.RWrist.value].x - bp[CocoPart.RShoulder.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.RShoulder.value].y) ** 2 < threshold)
         },
     ],
     Pose.CLAP: [
         {
-            "req": [CocoPart.RWrist, CocoPart.LWrist],
+            "req": [CocoPart.RWrist.value, CocoPart.LWrist.value],
             "check": (lambda bp: (bp[CocoPart.RWrist.value].x - bp[CocoPart.LWrist.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.LWrist.value].y) ** 2 < threshold)
         }
     ],
     Pose.BOTH_ARM_UP: [
         {
-            "req": [CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LWrist, CocoPart.LShoulder],
+            "req": [CocoPart.RWrist.value, CocoPart.RShoulder.value, CocoPart.LWrist.value, CocoPart.LShoulder.value],
             "check": (lambda bp: bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y)
         },
         {
-            "req": [CocoPart.RElbow, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LShoulder],
+            "req": [CocoPart.RElbow.value, CocoPart.RShoulder.value, CocoPart.LElbow.value, CocoPart.LShoulder.value],
             "check": (lambda bp: bp[CocoPart.RElbow.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y < bp[CocoPart.LShoulder.value].y)
         }
     ],
     Pose.RIGHT_ARM_UP: [
         {
-            "req": [CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LWrist, CocoPart.LShoulder],
+            "req": [CocoPart.RWrist.value, CocoPart.RShoulder.value, CocoPart.LWrist.value, CocoPart.LShoulder.value],
             "check": (lambda bp: bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y > bp[CocoPart.LShoulder.value].y)
         },
         {
-            "req": [CocoPart.RElbow, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LShoulder],
+            "req": [CocoPart.RElbow.value, CocoPart.RShoulder.value, CocoPart.LElbow.value, CocoPart.LShoulder.value],
             "check": (lambda bp: bp[CocoPart.RElbow.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y > bp[CocoPart.LShoulder.value].y)
         }
     ],
     Pose.LEFT_ARM_UP: [
         {
-            "req": [CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LWrist, CocoPart.LShoulder],
+            "req": [CocoPart.RWrist.value, CocoPart.RShoulder.value, CocoPart.LWrist.value, CocoPart.LShoulder.value],
             "check": (lambda bp: bp[CocoPart.RWrist.value].y > bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y)
         },
         {
-            "req": [CocoPart.RElbow, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LShoulder],
+            "req": [CocoPart.RElbow.value, CocoPart.RShoulder.value, CocoPart.LElbow.value, CocoPart.LShoulder.value],
             "check": (lambda bp: bp[CocoPart.RElbow.value].y > bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y < bp[CocoPart.LShoulder.value].y)
         }
     ],
@@ -479,7 +479,7 @@ check_pose = {
 
 def analyze_pose(human):
     global threshold
-    print(human)
+    # print(human)
 
     bp = human.body_parts
 
