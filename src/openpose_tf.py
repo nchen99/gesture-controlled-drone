@@ -356,13 +356,32 @@ def estimate_paf(peaks, heat_mat, paf_mat):
 
 def draw(img, humans):
     # img = cv2.resize(img, None, fx=1/10, fy=1/10, interpolation=cv2.INTER_AREA)
-
+    edges = [
+        (CocoPart.Nose, CocoPart.Neck),
+        (CocoPart.Nose, CocoPart.LEye), (CocoPart.LEye, CocoPart.LEar),
+        (CocoPart.Nose, CocoPart.REye), (CocoPart.REye, CocoPart.REar),
+        (CocoPart.Neck, CocoPart.LShoulder), (CocoPart.Neck, CocoPart.RShoulder),
+        (CocoPart.LShoulder, CocoPart.LElbow), (CocoPart.RShoulder, CocoPart.RElbow),
+        (CocoPart.LElbow, CocoPart.LWrist), (CocoPart.RElbow, CocoPart.RWrist),
+        (CocoPart.Neck, CocoPart.LHip), (CocoPart.Neck, CocoPart.RHip),
+        (CocoPart.LHip, CocoPart.LKnee), (CocoPart.RHip, CocoPart.RKnee),
+        (CocoPart.LKnee, CocoPart.LAnkle), (CocoPart.RKnee, CocoPart.RAnkle)
+    ]
     h, w, _ = img.shape
     for human in humans:
         color = list(np.random.random(size=3) * 256)
         for key, body_part in human.body_parts.items():
             center = (int(w*body_part.x), int(h*body_part.y))
             cv2.circle(img, center, radius=3, thickness=-1, color=color)
+
+        for edge in edges:
+            if set(edge) <= set(human.body_parts):
+                p1, p2 = edge
+                start = (int(w*human.body_parts[p1].x), int(h*human.body_parts[p1].y))
+                end = (int(w*human.body_parts[p2].x), int(h*human.body_parts[p2].y))
+                cv2.line(img, start, end, color=color, thickness=2)
+
+    pass
     filename = os.path.basename(f"{time.time_ns()}.png")
     cv2.imwrite(f"outputs/{filename}", img)
 
@@ -404,34 +423,95 @@ class Pose(Enum):
     LEFT_ARM_UP = 5 # left hand up
 
 
-#
+threshold = 0.01
+
+check_pose = {
+    Pose.CONFIRM: [
+        {
+            "req": [CocoPart.RWrist, CocoPart.RShoulder],
+            "check": (lambda bp: (bp[CocoPart.RWrist.value].x - bp[CocoPart.RShoulder.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.RShoulder.value].y) ** 2 < threshold)
+        },
+    ],
+    Pose.CLAP: [
+        {
+            "req": [CocoPart.RWrist, CocoPart.LWrist],
+            "check": (lambda bp: (bp[CocoPart.RWrist.value].x - bp[CocoPart.LWrist.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.LWrist.value].y) ** 2 < threshold)
+        }
+    ],
+    Pose.BOTH_ARM_UP: [
+        {
+            "req": [CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LWrist, CocoPart.LShoulder],
+            "check": (lambda bp: bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y)
+        },
+        {
+            "req": [CocoPart.RElbow, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LShoulder],
+            "check": (lambda bp: bp[CocoPart.RElbow.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y < bp[CocoPart.LShoulder.value].y)
+        }
+    ],
+    Pose.RIGHT_ARM_UP: [
+        {
+            "req": [CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LWrist, CocoPart.LShoulder],
+            "check": (lambda bp: bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y > bp[CocoPart.LShoulder.value].y)
+        },
+        {
+            "req": [CocoPart.RElbow, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LShoulder],
+            "check": (lambda bp: bp[CocoPart.RElbow.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y > bp[CocoPart.LShoulder.value].y)
+        }
+    ],
+    Pose.LEFT_ARM_UP: [
+        {
+            "req": [CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LWrist, CocoPart.LShoulder],
+            "check": (lambda bp: bp[CocoPart.RWrist.value].y > bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y)
+        },
+        {
+            "req": [CocoPart.RElbow, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LShoulder],
+            "check": (lambda bp: bp[CocoPart.RElbow.value].y > bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y < bp[CocoPart.LShoulder.value].y)
+        }
+    ],
+    Pose.NONE: [
+        {
+            "req": [],
+            "check": (lambda bp: True)
+        }
+    ]
+}
+
+
 def analyze_pose(human):
+    global threshold
     print(human)
-    threshold = 0.02
-    
+
     bp = human.body_parts
 
-    try:
-        if (bp[CocoPart.RWrist.value].x - bp[CocoPart.RShoulder.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.RShoulder.value].y) ** 2 < threshold:
-            return Pose.CONFIRM
 
-        if (bp[CocoPart.RWrist.value].x - bp[CocoPart.LWrist.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.LWrist.value].y) ** 2 < threshold:
-            return Pose.CLAP
+    for pose in check_pose.keys():
+        for entry in check_pose[pose]:
+            if set(entry["req"]) <= set(bp):
+                if entry["check"](bp):
+                    return pose
 
-
-        # Raising hands
-        if bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y:
-            if bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y:
-                return Pose.BOTH_ARM_UP
-            else:
-                return Pose.RIGHT_ARM_UP
-        else:
-            if bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y:
-                return Pose.LEFT_ARM_UP
-    except:
-       return Pose.KEY_MISSING
-    
     return Pose.NONE
+    # try:
+    #     if (bp[CocoPart.RWrist.value].x - bp[CocoPart.RShoulder.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.RShoulder.value].y) ** 2 < threshold:
+    #         return Pose.CONFIRM
+    #
+    #     if (bp[CocoPart.RWrist.value].x - bp[CocoPart.LWrist.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.LWrist.value].y) ** 2 < threshold:
+    #         return Pose.CLAP
+    #
+    #
+    #     # Raising hands
+    #     if bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y:
+    #         if bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y:
+    #             return Pose.BOTH_ARM_UP
+    #         else:
+    #             return Pose.RIGHT_ARM_UP
+    #     else:
+    #         if bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y:
+    #             return Pose.LEFT_ARM_UP
+    # except:
+    #    return Pose.KEY_MISSING
+    #
+    # return Pose.NONE
 
 
 
