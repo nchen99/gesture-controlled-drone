@@ -51,6 +51,7 @@ def manual_control(uav, shouldFollowMe, command):
     
         if i % 10 == 1:
             print(val)
+        # print(val)
         
         if val == '3':
             try:
