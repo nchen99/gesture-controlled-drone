@@ -89,8 +89,8 @@ def send_to_presenter_server(chan, frame_org, result_img):
 def init(uav, shouldFollowMe):
     args = parser()
 
-    if args.use_ps:
-        chan = init_presenter_server()
+    # if args.use_ps:
+    #     chan = init_presenter_server()
 
     x_err, y_err = 0, 0
 
@@ -100,14 +100,13 @@ def init(uav, shouldFollowMe):
         if not shouldFollowMe.get():
             time.sleep(0.1)
             continue
-        print("awesome")
 
         try:
             frame_org = tracker.fetch_frame()
             x_err, y_err, result_img = tracker.run_state_machine(frame_org, x_err, y_err)
 
-            if args.use_ps:
-                send_to_presenter_server(chan, frame_org, result_img)
+            # if args.use_ps:
+            #     send_to_presenter_server(chan, frame_org, result_img)
 
         except (KeyboardInterrupt, Exception) as e:
             tracker.uav.land()

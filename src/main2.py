@@ -17,6 +17,7 @@ from utils.shared_variable import Shared
 import threading
 # from threading import Thread
 from pid_controllers.run_track import init
+from utils.runlive_2 import PresenterServer
 
 
 shouldFollowMe: Shared
@@ -83,7 +84,7 @@ def follow_me(_, shouldFollowMe):
     if not following:
         print("I am in follow me.")
         shouldFollowMe.set(True)
-        time.sleep(1)
+        # time.sleep(1)
         following = True
 
 def floating(_, shouldFollowMe):
@@ -96,51 +97,6 @@ def take_picture(tello, _):
     print("I am in taking pictures mode.")
     frame = tello.get_frame_read().frame
     cv2.imwrite("./picture.jpeg", frame)
-
-def run_live(tello, shouldFollowMe, _acl_resource):
-    runner = LiveRunner(tello, shouldFollowMe, _acl_resource)
-    # needed to fully connect to presenter server?
-    time.sleep(10)
-    print("hellllo")
-    runner.display_result()
-
-def sm(tello, shouldFollowMe):
-    # t1 = threading.Thread(target=init, args=(tello, shouldFollowMe))
-    # t1.start()
-    state = State.INITIAL
-    while True:
-        try: 
-
-
-            func = state_to_func.get(state)
-            if func is not None:
-                print("Executing function related to state ", state)
-                func(tello, shouldFollowMe)
-
-            if state == State.LAND_CONFIRM or state == State.TAKEOFF_CONFIRM:
-                start = time.time()
-                print(f"Entering state {state}, waiting to confirm...")
-                while time.time() - start < 10:
-                    command = input("show the camera your body pose: ")
-                    if command == "2":
-                        print("Confirmed")
-                        state = get_next_state(state, command)
-                        print(state)
-                        break
-            
-            
-            else:
-                command = input("show the camera your body pose: ")
-                state = get_next_state(state, command)
-                print(state)
-            # if state == State.TAKEOFF_CONFIRM:
-            
-
-        except KeyboardInterrupt as e:
-            # face.released_acl()
-            tello.land()
-            tello.streamoff()
-            # t1.join()
 
 
 state_to_func = {
@@ -157,92 +113,39 @@ state_to_func = {
 # time.sleep(10)
 # tello.land()
 
+def runLive(p):
+    p.main()
+
 if __name__ == "__main__":
+    for i in reversed(range(0, 15)):
+        print(f"Starting drone in {i} seconds")
+        time.sleep(1)
+    
     tello = Tello()
     tello.connect()
     print(tello.get_battery(), "\n\n\n")
     tello.streamon()
-
-
-    # while True:
-    # frame = tello.get_frame_read().frame
-        
-
-    # while True:
-        # try:
-        #     frame = tello.get_frame_read().frame
-        #     cv2.imshow("drone", frame)
-        #     cv2.waitKey(1)
-        # except:
-        #     pass
-
-    # _acl_resource = AclResource()
-    # _acl_resource.init()
-
+    frame= tello.get_frame_read().frame
+    print(frame)
     shouldFollowMe = Shared(False)
 
-    # run_live(tello, shouldFollowMe, "random arg") # Third arg should be _acl_resource but doesn't matter?
 
-    # runner = LiveRunner(tello, shouldFollowMe, "rrr")
-    # needed to fully connect to presenter server?
-    # time.sleep(10)
-    # runner.display_result()
+    p = PresenterServer(tello)
+    t1 = threading.Thread(target=init, args=(tello, shouldFollowMe))
+    t1.start()
+    t2 = threading.Thread(target=runLive, args=(p,))
+    t2.start()
+    print("t2 start")
+    state = State.INITIAL
+    try:
+        while True:
+            func = state_to_func.get(state)
+            if func is not None:
+                print("Executing function related to state ", state)
+                func(tello, shouldFollowMe)
+            command = input("show the camera your body pose: ")
+            state = get_next_state(state, command)
+            print(state)
+    except KeyboardInterrupt:
+        tello.land()
 
-    # t1 = threading.Thread(target=init, args=(tello, shouldFollowMe))
-    # t2 = Thread(target=run_live, args=(tello, shouldFollowMe, "a"))
-    
-    # t2.start()
-    # time.sleep(10)
-    # t1.start()
-    
-
-    # face = FaceDetectionProcessor(params["task"]["object_detection"]["face_detection"], _acl_resource)
-    # hand = HandGestureProcessor(params["task"]["classification"]["gesture_yuv"], _acl_resource)
-
-    # state = State.INITIAL
-
-    t3 = threading.Thread(target=run_live, args=(tello, shouldFollowMe, "aaa"))
-    t4 = threading.Thread(target=sm, args=(tello, shouldFollowMe))
-    t3.start()
-    t4.start()
-
-    # cur = time.process_time()
-    # time.sleep(3)
-    # threadshold = time.process_time() - cur
-    # command = 
-
-
-    # while True:
-    #     try: 
-
-
-    #         func = state_to_func.get(state)
-    #         if func is not None:
-    #             print("Executing function related to state ", state)
-    #             func(tello, shouldFollowMe)
-
-    #         if state == State.LAND_CONFIRM or state == State.TAKEOFF_CONFIRM:
-    #             start = time.time()
-    #             print(f"Entering state {state}, waiting to confirm...")
-    #             while time.time() - start < 10:
-    #                 command = input("show the camera your body pose: ")
-    #                 if command == "2":
-    #                     print("Confirmed")
-    #                     state = get_next_state(state, command)
-    #                     print(state)
-    #                     break
-            
-            
-    #         else:
-    #             command = input("show the camera your body pose: ")
-    #             state = get_next_state(state, command)
-    #             print(state)
-    #         # if state == State.TAKEOFF_CONFIRM:
-            
-
-    #     except KeyboardInterrupt as e:
-    #         # face.released_acl()
-    #         tello.land()
-    #         tello.streamoff()
-            # t1.join()
-            # t2.join()

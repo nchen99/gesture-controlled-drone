@@ -9,7 +9,6 @@ from queue import Queue
 
 from utils.uav_utils import  manual_control
 from utils.params import params
-from atlas_utils.presenteragent import presenter_channel
 from atlas_utils.acl_image import AclImage
 from utils.shared_variable import Shared
 
@@ -32,7 +31,6 @@ class LiveRunner:
         self.model_processor = self._model_processor(self.model_params) # delete second arg self._acl_resource
 
     def init_presenter_channel(self):
-        chan = presenter_channel.open_channel(self.uav_presenter_conf)
         if chan is None:
             print("Open presenter channel failed")
             return
@@ -53,7 +51,7 @@ class LiveRunner:
     #     return self.command
 
     def display_result(self):
-        self.init_model_processor()
+        # self.init_model_processor()
         self.uav.streamon()
         print("\n##################################################################################")
         print("Opening Presenter Server...")
@@ -62,7 +60,7 @@ class LiveRunner:
             print("Open presenter channel failed")
             return
 
-        self.engage_manual_control()
+        # self.engage_manual_control()
         
         print("\n############################################################")
         print("Fetching UAV Livestream...")
@@ -77,11 +75,12 @@ class LiveRunner:
             ## Model Prediction ##
             
             try:
-                result_img, gesture = self.model_processor.predict(frame_org)
-                self.command.set(gesture)
+                # result_img, gesture = self.model_processor.predict(frame_org)
+                # self.command.set(gesture)
+
 
                 """ Display inference results and send to presenter channel """
-                _, jpeg_image = cv2.imencode('.jpg', result_img)
+                _, jpeg_image = cv2.imencode('.jpg', frame_org)
                 jpeg_image = AclImage(jpeg_image, frame_org.shape[0], frame_org.shape[1], jpeg_image.size)
                 chan.send_detection_data(frame_org.shape[0], frame_org.shape[1], jpeg_image, [])
             except:

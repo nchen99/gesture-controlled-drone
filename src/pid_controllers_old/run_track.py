@@ -100,7 +100,6 @@ def init(uav, shouldFollowMe):
         if not shouldFollowMe.get():
             time.sleep(0.1)
             continue
-        print("awesome")
         try:
             frame_org = tracker.fetch_frame()
             x_err, y_err, result_img = tracker.run_state_machine(frame_org, x_err, y_err)

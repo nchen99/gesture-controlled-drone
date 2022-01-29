@@ -19,10 +19,13 @@ from atlas_utils.acl_resource import AclResource
 from atlas_utils.acl_model import Model
 
 class BaseProcessor:
+    acl_resource = None
     def __init__(self, params):
         # Initialize ACL Resources
-        self._acl_resource = AclResource()
-        self._acl_resource.init()
+        if BaseProcessor.acl_resource is None:
+            BaseProcessor.acl_resource = AclResource()
+            BaseProcessor.acl_resource.init()
+        self._acl_resource = BaseProcessor.acl_resource
         self.params = params
         self.validate()
         self._model_width = params['model_width']
