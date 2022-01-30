@@ -22,6 +22,7 @@ class AclResource(object):
         self.run_mode = None
 
     def init(self):
+        print("-------------------------HELLO ACL WORLD--------------------------------------")
         """
         init resource
         """
