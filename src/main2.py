@@ -1,6 +1,7 @@
 # from tkinter import N
 from unittest import runner
 from utils.params import params
+from model_processors.BaseProcessor import BaseProcessor
 from model_processors.FaceDetectionProcessor import ModelProcessor as FaceDetectionProcessor
 from model_processors.HandGestureProcessor import ModelProcessor as HandGestureProcessor
 from atlas_utils.presenteragent import presenter_channel
@@ -18,7 +19,9 @@ import threading
 # from threading import Thread
 from pid_controllers.run_track import init
 from utils.runlive_2 import PresenterServer
+# import openpose_tf
 
+from atlas_utils.acl_resource import AclResource
 
 shouldFollowMe: Shared
 
@@ -117,6 +120,7 @@ def runLive(p):
     p.main()
 
 if __name__ == "__main__":
+
     for i in reversed(range(0, 15)):
         print(f"Starting drone in {i} seconds")
         time.sleep(1)
@@ -127,25 +131,68 @@ if __name__ == "__main__":
     tello.streamon()
     frame= tello.get_frame_read().frame
     print(frame)
+
+
     shouldFollowMe = Shared(False)
 
 
     p = PresenterServer(tello)
     t1 = threading.Thread(target=init, args=(tello, shouldFollowMe))
     t1.start()
+
     t2 = threading.Thread(target=runLive, args=(p,))
     t2.start()
+
     print("t2 start")
     state = State.INITIAL
+    is_confirm = False
+    confirm_timeout = None
+
+    # print("wait pid to do its stuff, 10 sec")
+    # time.sleep(10)
+    # openpose_tf.init(openpose_tf.MODEL_PATH)
+    # time.sleep(5)
+
     try:
         while True:
             func = state_to_func.get(state)
             if func is not None:
                 print("Executing function related to state ", state)
                 func(tello, shouldFollowMe)
-            command = input("show the camera your body pose: ")
+            # frame= tello.get_frame_read().frame
+            # command = openpose_tf.get_pose(frame)
+            # if len(command) > 0:
+            #     command = str(command[0].value)
+            # else:
+            #     command = "0"
+            # print("Command: ", command)
+            command = "-1"
             state = get_next_state(state, command)
-            print(state)
+            print(state, command)
+
+            # if state in [State.TAKEOFF_CONFIRM, State.FOLLOW_ME_CONFIRM, State.LAND_CONFIRM, State.TAKE_A_PICTURE_CONFIRM]:
+            #     confirm_timeout = time.time() + 3
+            #     # command = openpose_tf.get_pose(frame)
+            #     while time.time() < confirm_timeout and command != "2":
+            #         command = tello.get_frame_read().frame
+            #     if command == "2":
+            #         state = get_next_state(state, "2")
+            
+                
+
+
+            # if not is_confirm and next_state in [State.TAKEOFF_CONFIRM, State.FOLLOW_ME_CONFIRM, State.LAND_CONFIRM, State.TAKE_A_PICTURE_CONFIRM]:
+            #     is_confirm = True
+            #     confirm_timeout = time.time() + damn
+            #     continue
+
+            # if is_confirm and time.time() < confirm_timeout and command != "2":
+            #     pass
+            # else:
+            #     state = next_state
+            #     is_confirm = False
+            # print(state)
+            
     except KeyboardInterrupt:
         tello.land()
 

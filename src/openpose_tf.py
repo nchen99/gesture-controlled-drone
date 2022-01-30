@@ -30,7 +30,7 @@ from atlas_utils.acl_resource import AclResource as AclLiteResource
 from atlas_utils.acl_model import Model as AclLiteModel
 
 
-MODEL_PATH = os.path.join("/home/HwHiAiUser/gesture-controlled-drone/model/OpenPose_for_TensorFlow_BatchSize_1.om")
+MODEL_PATH = os.path.join("/home/HwHiAiUser/CPEN491/model/OpenPose_for_TensorFlow_BatchSize_1.om")
 IMAGE_PATH = sys.argv[1] if len(sys.argv) > 1 else "./assets/in.png"
 
 print("MODEL_PATH:", MODEL_PATH)
@@ -417,10 +417,10 @@ class Pose(Enum):
     KEY_MISSING = -1
     NONE = 0 # any
     RIGHT_ARM_UP = 1 # right arm up
-    CONFIRM = 2 # right hand to shoulder
+    LEFT_ARM_UP = 2 # left hand up
     BOTH_ARM_UP = 3 # double hand up
     CLAP = 4 # hand together
-    LEFT_ARM_UP = 5 # left hand up
+    CONFIRM = 5 # right hand to shoulder
 
 
 threshold = 0.01
@@ -517,8 +517,7 @@ def analyze_pose(human):
 
 def init(model_path):
     global acl_resource, model
-    acl_resource = AclLiteResource()
-    acl_resource.init()
+    acl_resource = None
 
     model = AclLiteModel(model_path)
 
@@ -534,7 +533,7 @@ def get_pose(img):
         results.append(analyze_pose(human))
 
     
-    draw(img, humans)
+    # draw(img, humans)
     # also include the cordinates? => can keep track of the target when there are multiple humans
     return results
 
