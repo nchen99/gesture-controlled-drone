@@ -22,8 +22,7 @@ from utils.runlive_2 import PresenterServer
 # import openpose_tf
 
 from atlas_utils.acl_resource import AclResource
-
-shouldFollowMe: Shared
+import os
 
 class State(Enum):
     INITIAL = 1
@@ -82,18 +81,18 @@ def land(tello, shouldFollowMe):
 
 
 following = False
-def follow_me(_, shouldFollowMe):
+def follow_me(_, w):
     global following
     if not following:
         print("I am in follow me.")
-        shouldFollowMe.set(True)
+        w.write(True)
         # time.sleep(1)
         following = True
 
-def floating(_, shouldFollowMe):
+def floating(_, w):
     global following
     if following:
-        shouldFollowMe.set(False)
+        w.write(False)
         following = False
 
 def take_picture(tello, _):
@@ -119,6 +118,7 @@ state_to_func = {
 def runLive(p):
     p.main()
 
+
 if __name__ == "__main__":
 
     for i in reversed(range(0, 15)):
@@ -133,12 +133,7 @@ if __name__ == "__main__":
     print(frame)
 
 
-    shouldFollowMe = Shared(False)
-
-
     p = PresenterServer(tello)
-    t1 = threading.Thread(target=init, args=(tello, shouldFollowMe))
-    t1.start()
 
     t2 = threading.Thread(target=runLive, args=(p,))
     t2.start()
@@ -153,46 +148,60 @@ if __name__ == "__main__":
     # openpose_tf.init(openpose_tf.MODEL_PATH)
     # time.sleep(5)
 
-    try:
-        while True:
-            func = state_to_func.get(state)
-            if func is not None:
-                print("Executing function related to state ", state)
-                func(tello, shouldFollowMe)
-            # frame= tello.get_frame_read().frame
-            # command = openpose_tf.get_pose(frame)
-            # if len(command) > 0:
-            #     command = str(command[0].value)
-            # else:
-            #     command = "0"
-            # print("Command: ", command)
-            command = "-1"
-            state = get_next_state(state, command)
-            print(state, command)
+    r, w = os.pipe()
 
-            # if state in [State.TAKEOFF_CONFIRM, State.FOLLOW_ME_CONFIRM, State.LAND_CONFIRM, State.TAKE_A_PICTURE_CONFIRM]:
-            #     confirm_timeout = time.time() + 3
-            #     # command = openpose_tf.get_pose(frame)
-            #     while time.time() < confirm_timeout and command != "2":
-            #         command = tello.get_frame_read().frame
-            #     if command == "2":
-            #         state = get_next_state(state, "2")
-            
+    processid = os.fork()
+    if processid:
+        # Parent ID:
+        os.close(r)
+        w = os.fdopen(w, 'w')
+        # the rest:
+        try:
+            while True:
+                func = state_to_func.get(state)
+                if func is not None:
+                    print("Executing function related to state ", state)
+                    func(tello, w)
+                # frame= tello.get_frame_read().frame
+                # command = openpose_tf.get_pose(frame)
+                # if len(command) > 0:
+                #     command = str(command[0].value)
+                # else:
+                #     command = "0"
+                # print("Command: ", command)
+                command = "-1"
+                state = get_next_state(state, command)
+                print(state, command)
+
+                # if state in [State.TAKEOFF_CONFIRM, State.FOLLOW_ME_CONFIRM, State.LAND_CONFIRM, State.TAKE_A_PICTURE_CONFIRM]:
+                #     confirm_timeout = time.time() + 3
+                #     # command = openpose_tf.get_pose(frame)
+                #     while time.time() < confirm_timeout and command != "2":
+                #         command = tello.get_frame_read().frame
+                #     if command == "2":
+                #         state = get_next_state(state, "2")
                 
+                    
 
 
-            # if not is_confirm and next_state in [State.TAKEOFF_CONFIRM, State.FOLLOW_ME_CONFIRM, State.LAND_CONFIRM, State.TAKE_A_PICTURE_CONFIRM]:
-            #     is_confirm = True
-            #     confirm_timeout = time.time() + damn
-            #     continue
+                # if not is_confirm and next_state in [State.TAKEOFF_CONFIRM, State.FOLLOW_ME_CONFIRM, State.LAND_CONFIRM, State.TAKE_A_PICTURE_CONFIRM]:
+                #     is_confirm = True
+                #     confirm_timeout = time.time() + damn
+                #     continue
 
-            # if is_confirm and time.time() < confirm_timeout and command != "2":
-            #     pass
-            # else:
-            #     state = next_state
-            #     is_confirm = False
-            # print(state)
-            
-    except KeyboardInterrupt:
-        tello.land()
+                # if is_confirm and time.time() < confirm_timeout and command != "2":
+                #     pass
+                # else:
+                #     state = next_state
+                #     is_confirm = False
+                # print(state)
+                
+        except KeyboardInterrupt:
+            tello.land()
+    else:
+        os.close(w)
+        r = os.fdopen(r)
+        init(tello, r)
+
+    
 
