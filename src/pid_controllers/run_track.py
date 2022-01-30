@@ -23,6 +23,9 @@ from atlas_utils.acl_image import AclImage
 from utils.shared_variable import Shared
 
 
+acl = None
+
+
 def init_presenter_server():
     SRC_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     PRESENTER_SERVER_CONF = os.path.join(SRC_PATH, "uav_presenter_server.conf")
@@ -62,7 +65,7 @@ def _init_filter(filter_name, **kwargs):
 
 def initialize_tracker(args, uav):
     inference_filter = _init_filter(filter_name=args.inference_filter, fps=args.if_fps, window=args.if_window)
-    tracker = _init_tracker(tracker_name=args.tracker, pid=args.pid, inference_filter=inference_filter)
+    tracker = _init_tracker(tracker_name=args.tracker, pid=args.pid, inference_filter=inference_filter, _acl_resource=acl)
     tracker.init_uav(uav)
     return tracker
 
@@ -88,6 +91,9 @@ def send_to_presenter_server(chan, frame_org, result_img):
 
 def init(uav, shouldFollowMe, _acl_resource):
     args = parser()
+
+    global acl
+    acl = _acl_resource
 
     # if args.use_ps:
     #     chan = init_presenter_server()

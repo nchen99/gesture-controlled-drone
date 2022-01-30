@@ -25,9 +25,9 @@ class PIDFaceTracker(TelloPIDController):
     Returns
         None  
     """
-    def __init__(self, pid, inference_filter=DecisionFilter, save_flight_hist=False):
+    def __init__(self, pid, inference_filter=DecisionFilter, _acl_resource=None, save_flight_hist=False):
         super().__init__(pid, save_flight_hist)
-        self.model_processor = self._load_mp("face_detection")
+        self.model_processor = self._load_mp("face_detection", _acl_resource)
         self.inference_filter = inference_filter    # A fully instantiated InferenceFilter object  
         self.setpoint_area = (20000, 100000)        # Lower and Upper bound for Forward&Backward Range-of-Motion - can be adjusted    
         self.save_flight_hist = save_flight_hist
