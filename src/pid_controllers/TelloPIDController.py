@@ -47,7 +47,7 @@ class TelloPIDController:
         self.track_mode = False
 
     @staticmethod
-    def _load_mp(detector_name):
+    def _load_mp(detector_name, _acl_resource):
         """Internal method for children class to load specific ModelProcessor
         :param:
             + detector_name - Key name of detection model
@@ -58,7 +58,7 @@ class TelloPIDController:
         processor = model_info["model_processor"]
         MP = import_module(f"model_processors.{processor}")
         MP = getattr(MP, "ModelProcessor")
-        return MP(model_info)
+        return MP(model_info, _acl_resource)
     
     @staticmethod
     def _load_filter(Filter, **kwargs):

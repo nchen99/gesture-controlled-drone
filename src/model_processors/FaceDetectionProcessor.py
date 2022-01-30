@@ -24,8 +24,8 @@ from atlas_utils.resource_list import resource_list
 
 
 class ModelProcessor(BaseProcessor):
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, params, _acl_resource):
+        super().__init__(params, _acl_resource)
         
         # parameters for preprocessing
         self.ih, self.iw = (params['camera_height'], params['camera_width'])
