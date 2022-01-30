@@ -517,7 +517,8 @@ def analyze_pose(human):
 
 def init(model_path):
     global acl_resource, model
-    acl_resource = None
+    acl_resource = AclLiteResource()
+    acl_resource.init()
 
     model = AclLiteModel(model_path)
 
