@@ -129,9 +129,12 @@ if __name__ == "__main__":
     print(frame)
     shouldFollowMe = Shared(False)
 
+    _acl_resource = AclResource()
+    _acl_resource.init()
+
 
     p = PresenterServer(tello)
-    t1 = threading.Thread(target=init, args=(tello, shouldFollowMe))
+    t1 = threading.Thread(target=init, args=(tello, shouldFollowMe, _acl_resource))
     t1.start()
     t2 = threading.Thread(target=runLive, args=(p,))
     t2.start()

@@ -86,7 +86,7 @@ def send_to_presenter_server(chan, frame_org, result_img):
     jpeg_image = AclImage(jpeg_image, frame_org.shape[0], frame_org.shape[1], jpeg_image.size)
     chan.send_detection_data(frame_org.shape[0], frame_org.shape[1], jpeg_image, [])
 
-def init(uav, shouldFollowMe):
+def init(uav, shouldFollowMe, _acl_resource):
     args = parser()
 
     # if args.use_ps:
