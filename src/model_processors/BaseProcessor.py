@@ -25,7 +25,7 @@ class BaseProcessor:
         # if _acl_resource is None:
         #     BaseProcessor.acl_resource = AclResource()
         #     BaseProcessor.acl_resource.init()
-        print(_acl_resource)
+        print("Here is acl_resource: ", _acl_resource)
         self._acl_resource = _acl_resource
         self.params = params
         self.validate()
