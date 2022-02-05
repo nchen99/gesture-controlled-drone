@@ -545,15 +545,18 @@ def get_bounding_box(img):
     humans = post_process(output[0][0])
     results = []
 
+    process_vars = None
     for human in humans:
         #processing here
-        results.append(calculate_bounding_box(human))
+        result, process_vars = calculate_bounding_box(human)
+        results.append(result)
 
     for result in results:
         if(len(result) != 0):
             draw_box(result, img)
 
-    return results
+    return img, process_vars
+
 
 def calculate_bounding_box(human):
     #logic: check for identifiable points
@@ -579,7 +582,7 @@ def calculate_bounding_box(human):
         boxCoordinates.append([x - dx, y - dx]) #lower left corner
         boxCoordinates.append([x + dx, y - dx]) #lower right corner
         
-    return boxCoordinates
+    return boxCoordinates, (4*dx*dy, [x, y])
 
 def draw_box(coordinates, img):
     print(coordinates)

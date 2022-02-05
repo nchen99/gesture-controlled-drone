@@ -50,12 +50,12 @@ class PIDOpenPoseTracker(TelloPIDController):
             result_img   - inference result superimposed on original frame
         """
         
+        return openpose_tf.get_bounding_box(frame)
+        # process_var_bbox_area = 0
+        # process_var_bbox_center = None
+        # frame = openpose_tf.get_bounding_box(frame)
 
-        process_var_bbox_area = 0
-        process_var_bbox_center = None
-        frame = openpose_tf.get_bounding_box(frame)
-
-        return frame, (process_var_bbox_area, process_var_bbox_center)
+        # return frame, (process_var_bbox_area, process_var_bbox_center)
 
 
     def _pid_controller(self, process_vars, prev_x_err, prev_y_err):
@@ -145,6 +145,8 @@ class PIDOpenPoseTracker(TelloPIDController):
             process_vars - Tuple(bbox_area, bbox_center) of process variables
         """
         result_img, process_vars = self._unpack_feedback(frame)
+
+        # ----------------------------------- area is not used here!!! -------------------------
         area, center = process_vars[0], process_vars[1]
 
         cur_mode = "TRACK" if self.track_mode else "SEARCH"
