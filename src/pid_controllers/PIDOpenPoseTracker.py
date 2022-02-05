@@ -28,7 +28,6 @@ class PIDOpenPoseTracker(TelloPIDController):
     """
     def __init__(self, pid, inference_filter=DecisionFilter, save_flight_hist=False):
         super().__init__(pid, save_flight_hist)
-        self.model_processor = self._load_mp("face_detection")
         openpose_tf.init(openpose_tf.MODEL_PATH)
         self.inference_filter = inference_filter    # A fully instantiated InferenceFilter object  
         # ------------------------------- Don't forget to change the value here------------
