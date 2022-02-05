@@ -3,9 +3,7 @@
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +28,7 @@ from atlas_utils.acl_resource import AclResource as AclLiteResource
 from atlas_utils.acl_model import Model as AclLiteModel
 
 
-MODEL_PATH = os.path.join("/home/HwHiAiUser/CPEN491/model/OpenPose_for_TensorFlow_BatchSize_1.om")
+MODEL_PATH = os.path.join("/home/HwHiAiUser/gesture-controlled-drone/model/OpenPose_for_TensorFlow_BatchSize_1.om")
 IMAGE_PATH = sys.argv[1] if len(sys.argv) > 1 else "./assets/in.png"
 
 print("MODEL_PATH:", MODEL_PATH)
@@ -362,17 +360,17 @@ def draw(img, humans):
         (CocoPart.Nose.value, CocoPart.REye.value), (CocoPart.REye.value, CocoPart.REar.value),
         (CocoPart.Neck.value, CocoPart.LShoulder.value), (CocoPart.Neck.value, CocoPart.RShoulder.value),
         (CocoPart.LShoulder.value, CocoPart.LElbow.value), (CocoPart.RShoulder.value, CocoPart.RElbow.value),
-        (CocoPart.LElbow.value, CocoPart.LWrist.value), (CocoPart.RElbow, CocoPart.RWrist.value),
-        (CocoPart.Neck.value, CocoPart.LHip.value), (CocoPart.Neck, CocoPart.RHip.value),
-        (CocoPart.LHip.value, CocoPart.LKnee.value), (CocoPart.RHip, CocoPart.RKnee.value),
-        (CocoPart.LKnee.value, CocoPart.LAnkle.value), (CocoPart.RKnee, CocoPart.RAnkle.value)
+        (CocoPart.LElbow.value, CocoPart.LWrist.value), (CocoPart.RElbow.value, CocoPart.RWrist.value),
+        (CocoPart.Neck.value, CocoPart.LHip.value), (CocoPart.Neck.value, CocoPart.RHip.value),
+        (CocoPart.LHip.value, CocoPart.LKnee.value), (CocoPart.RHip.value, CocoPart.RKnee.value),
+        (CocoPart.LKnee.value, CocoPart.LAnkle.value), (CocoPart.RKnee.value, CocoPart.RAnkle.value)
     ]
     h, w, _ = img.shape
     for human in humans:
         color = list(np.random.random(size=3) * 256)
         for key, body_part in human.body_parts.items():
             center = (int(w*body_part.x), int(h*body_part.y))
-            cv2.circle(img, center, radius=3, thickness=-1, color=color)
+            cv2.circle(img, center, radius=4, thickness=-1, color=color)
 
         for edge in edges:
             if set(edge) <= set(human.body_parts):
@@ -417,10 +415,10 @@ class Pose(Enum):
     KEY_MISSING = -1
     NONE = 0 # any
     RIGHT_ARM_UP = 1 # right arm up
-    LEFT_ARM_UP = 2 # left hand up
+    CONFIRM = 2 # right hand to shoulder
     BOTH_ARM_UP = 3 # double hand up
     CLAP = 4 # hand together
-    CONFIRM = 5 # right hand to shoulder
+    LEFT_ARM_UP = 5 # left hand up
 
 
 threshold = 0.01
@@ -476,6 +474,7 @@ check_pose = {
     ]
 }
 
+boxReq = [CocoPart.Nose.value, CocoPart.RShoulder.value, CocoPart.LShoulder.value]
 
 def analyze_pose(human):
     global threshold
@@ -534,9 +533,65 @@ def get_pose(img):
         results.append(analyze_pose(human))
 
     
-    # draw(img, humans)
+    draw(img, humans)
     # also include the cordinates? => can keep track of the target when there are multiple humans
     return results
+
+#returns an array of four coordinates to be used as bounding box
+def get_bounding_box(img):
+    global model
+    model_input = pre_process(img)
+    output = model.execute([model_input])
+    humans = post_process(output[0][0])
+    results = []
+
+    for human in humans:
+        #processing here
+        results.append(calculate_bounding_box(human))
+
+    for result in results:
+        if(len(result) != 0):
+            draw_box(result, img)
+
+    return results
+
+def calculate_bounding_box(human):
+    #logic: check for identifiable points
+    #case 1: person is facing forward, all facial points are available
+    # => use nose as center point, shoulder distance as width, shoulder to nose distance as height
+    #case 2: person is facing sideways or backwards, in which we can only detect the neck, maybe a shoulder or two
+    # => neck = center of box, draw based on preset radius
+    # => alternatively return inconclusive and make the drone go into search mode until a box can be found
+    bp = human.body_parts
+    boxCoordinates = []
+    print(bp)
+
+    #case1 => CocoPart.Nose.value, CocoPart.RShoulder.value, CocoPart.LShoulder.value
+    if(set(boxReq) <= set(bp)):
+        #center
+        x = bp[CocoPart.Nose.value].x
+        y = bp[CocoPart.Nose.value].y
+        dx = bp[CocoPart.Nose.value].x - bp[CocoPart.RShoulder.value].x 
+        dy = bp[CocoPart.Nose.value].y - bp[CocoPart.RShoulder.value].y 
+
+        boxCoordinates.append([x + dx, y + dx]) #upper right corner
+        boxCoordinates.append([x - dx, y + dx]) #upper left corner
+        boxCoordinates.append([x - dx, y - dx]) #lower left corner
+        boxCoordinates.append([x + dx, y - dx]) #lower right corner
+        
+    return boxCoordinates
+
+def draw_box(coordinates, img):
+    print(coordinates)
+    h, w, _ = img.shape
+    color = (0, 255, 0)
+    cv2.line(img, (int(w*coordinates[0][0]), int(h*coordinates[0][1])), (int(w*coordinates[1][0]), int(h*coordinates[1][1])), color=color, thickness=2)
+    cv2.line(img, (int(w*coordinates[1][0]), int(h*coordinates[1][1])), (int(w*coordinates[2][0]), int(h*coordinates[2][1])), color=color, thickness=2)
+    cv2.line(img, (int(w*coordinates[2][0]), int(h*coordinates[2][1])), (int(w*coordinates[3][0]), int(h*coordinates[3][1])), color=color, thickness=2)
+    cv2.line(img, (int(w*coordinates[3][0]), int(h*coordinates[3][1])), (int(w*coordinates[0][0]), int(h*coordinates[0][1])), color=color, thickness=2)
+
+    filename = os.path.basename(f"{time.time_ns()}.png")
+    cv2.imwrite(f"outputs/{filename}", img)
 
 
 # def main(model_path, img_path):
