@@ -541,6 +541,8 @@ def get_pose(img):
 def get_bounding_box(img):
     global model
     model_input = pre_process(img)
+    print("model_input: ", model_input)
+    print("model_input length: ", len(model_input))
     output = model.execute([model_input])
     humans = post_process(output[0][0])
     results = []
