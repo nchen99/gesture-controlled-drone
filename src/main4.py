@@ -38,6 +38,7 @@ if __name__ == "__main__":
                 print("This many None images: ", error)
             continue
         results = openpose_tf.get_bounding_box(img)
+        print(results)
         show(chan, img)
         # if len(results) == 0:
         #     continue
