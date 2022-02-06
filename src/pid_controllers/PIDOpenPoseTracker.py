@@ -143,10 +143,10 @@ class PIDOpenPoseTracker(TelloPIDController):
             result_img   - inference result superimposed on frame
             process_vars - Tuple(bbox_area, bbox_center) of process variables
         """
-        result_img, process_vars = self._unpack_feedback(frame)
-
+        result = self._unpack_feedback(frame)
+        result = result[0]
         # ----------------------------------- area is not used here!!! -------------------------
-        area, center = process_vars[0], process_vars[1]
+        area, center = result["area"], result["center"]
 
         cur_mode = "TRACK" if self.track_mode else "SEARCH"
         sample_val = center if center is None else "Presence"
@@ -166,7 +166,7 @@ class PIDOpenPoseTracker(TelloPIDController):
             print("\n######################################################")
             print(f"Mode switched from {cur_mode} to {new_mode}")
 
-        return result_img, process_vars
+        return frame, (area, center)
     
     def run_state_machine(self, frame, prev_x_err, prev_y_err):
         result_img, process_vars = self._manage_state(frame)

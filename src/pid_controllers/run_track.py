@@ -104,9 +104,9 @@ if __name__ == "__main__":
 
     while not flight_end:
         try:
-            if not tookoff:
-                tookoff = True
-                tracker.uav.takeoff()
+            # if not tookoff:
+            #     tookoff = True
+            #     tracker.uav.takeoff()
                 # tracker.uav.move_up(70)
             
             if time.time() > timeout:        
