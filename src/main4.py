@@ -39,8 +39,8 @@ if __name__ == "__main__":
             continue
         results = openpose_tf.get_bounding_box(img)
         show(chan, img)
-        if len(results) == 0:
-            continue
-        print(results[0]["area"])
+        # if len(results) == 0:
+        #     continue
+        # print(results[0]["area"])
 
     

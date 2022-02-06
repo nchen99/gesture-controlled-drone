@@ -494,7 +494,7 @@ check_pose = {
 }
 
 boxReq = [CocoPart.Nose.value,
-          CocoPart.RShoulder.value, CocoPart.LShoulder.value]
+          CocoPart.RShoulder.value, CocoPart.LShoulder.value, CocoPart.Neck.value]
 
 
 def analyze_pose(human):
@@ -559,6 +559,27 @@ def get_pose(img):
 # returns an array of four coordinates to be used as bounding box
 
 
+def get_nose_neck_line(img):
+    global model
+    model_input = pre_process(img)
+    output = model.execute([model_input])
+    humans = post_process(output[0][0])
+    for human in humans:
+        human = human.body_parts
+        if(set([CocoPart.Nose.value,  CocoPart.Neck.value]) <= set(human)):
+            nose = human[CocoPart.Nose.value]
+            neck = human[CocoPart.Neck.value]
+
+            convert = lambda i : (int(i.x * img.shape[1]), int(i.y * img.shape[0]))
+
+            nose = convert(nose)
+            neck = convert(neck)
+
+            dist = math.sqrt((nose[0]- neck[0]) ** 2 + (nose[1] - neck[1]) ** 2)
+            print(f"The distance between my neck and nose is {dist}")
+            cv2.line(img, nose, neck, color=(0, 255, 0), thickness=2)
+
+
 def get_bounding_box(img):
     global model
     model_input = pre_process(img)
@@ -601,14 +622,18 @@ def calculate_bounding_box(human, h, w):
         dx = abs(bp[CocoPart.Nose.value].x - bp[CocoPart.RShoulder.value].x)
         dy = abs(bp[CocoPart.Nose.value].y - bp[CocoPart.RShoulder.value].y)
 
+        nose = bp[CocoPart.Nose.value]
+        neck = bp[CocoPart.Neck.value]
+
         # return boxCoordinates, (400000*dx*dy, [x, y])
         return {
-            "ur": [int(w * (x + dx)), int(h * (y + dx))],
-            "ul": [int(w * (x - dx)), int(h * (y + dx))],
-            "ll": [int(w * (x - dx)), int(h * (y - dx))],
-            "lr": [int(w * (x + dx)), int(h * (y - dx))],
+            "ur": [int(w * (x + dx)), int(h * (y + dy))],
+            "ul": [int(w * (x - dx)), int(h * (y + dy))],
+            "ll": [int(w * (x - dx)), int(h * (y - dy))],
+            "lr": [int(w * (x + dx)), int(h * (y - dy))],
             "center": [int(w * x), int(h * y)],
             "area": int(2 * dx * w) * int(2 * dy * h),
+            "dist": int(math.sqrt((w * nose.x - w * neck.x) ** 2 + (h * nose.y - h * neck.y) ** 2)),
         }
 
     return None
