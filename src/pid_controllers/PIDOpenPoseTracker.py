@@ -98,12 +98,12 @@ class PIDOpenPoseTracker(TelloPIDController):
             up_down_velocity = int(np.clip(up_down_velocity, -50, 50))
 
         # Rectify distance between drone and target from bbox area: Adjusts forward and backward motion
-        if area > self.setpoint_area[0] and area < self.setpoint_area[1]:
-            forward_backward_velocity = 0
-        elif area < self.setpoint_area[0]:
-            forward_backward_velocity = 20
-        elif area > self.setpoint_area[1]:
-            forward_backward_velocity = -20
+        # if area > self.setpoint_area[0] and area < self.setpoint_area[1]:
+        #     forward_backward_velocity = 0
+        # elif area < self.setpoint_area[0]:
+        #     forward_backward_velocity = 20
+        # elif area > self.setpoint_area[1]:
+        #     forward_backward_velocity = -20
 
         # Saves run history in a list for serialization
         if self.save_flight_hist:
@@ -144,6 +144,8 @@ class PIDOpenPoseTracker(TelloPIDController):
             process_vars - Tuple(bbox_area, bbox_center) of process variables
         """
         result = self._unpack_feedback(frame)
+        if len(result) == 0:
+            return None, None
         result = result[0]
         # ----------------------------------- area is not used here!!! -------------------------
         area, center = result["area"], result["center"]
