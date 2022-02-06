@@ -567,7 +567,7 @@ def get_bounding_box(img):
     output = model.execute([model_input])
     humans = post_process(output[0][0])
     results = []
-    draw(img, humans)
+    # draw(img, humans)
     for human in humans:
         # processing here
         result = calculate_bounding_box(human, img.shape[0], img.shape[1])
