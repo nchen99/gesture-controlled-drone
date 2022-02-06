@@ -559,25 +559,6 @@ def get_pose(img):
 # returns an array of four coordinates to be used as bounding box
 
 
-def get_nose_neck_line(img):
-    global model
-    model_input = pre_process(img)
-    output = model.execute([model_input])
-    humans = post_process(output[0][0])
-    for human in humans:
-        human = human.body_parts
-        if(set([CocoPart.Nose.value,  CocoPart.Neck.value]) <= set(human)):
-            nose = human[CocoPart.Nose.value]
-            neck = human[CocoPart.Neck.value]
-
-            convert = lambda i : (int(i.x * img.shape[1]), int(i.y * img.shape[0]))
-
-            nose = convert(nose)
-            neck = convert(neck)
-
-            dist = math.sqrt((nose[0]- neck[0]) ** 2 + (nose[1] - neck[1]) ** 2)
-            print(f"The distance between my neck and nose is {dist}")
-            cv2.line(img, nose, neck, color=(0, 255, 0), thickness=2)
 
 
 def get_bounding_box(img):
@@ -622,8 +603,11 @@ def calculate_bounding_box(human, h, w):
         dx = abs(bp[CocoPart.Nose.value].x - bp[CocoPart.RShoulder.value].x)
         dy = abs(bp[CocoPart.Nose.value].y - bp[CocoPart.RShoulder.value].y)
 
-        nose = bp[CocoPart.Nose.value]
-        neck = bp[CocoPart.Neck.value]
+        convert = lambda i : (int(i.x * w), int(i.y * h))
+
+        nose = convert(bp[CocoPart.Nose.value])
+        neck = convert(bp[CocoPart.Neck.value])
+
 
         # return boxCoordinates, (400000*dx*dy, [x, y])
         return {
@@ -633,7 +617,9 @@ def calculate_bounding_box(human, h, w):
             "lr": [int(w * (x + dx)), int(h * (y - dy))],
             "center": [int(w * x), int(h * y)],
             "area": int(2 * dx * w) * int(2 * dy * h),
-            "dist": int(math.sqrt((w * nose.x - w * neck.x) ** 2 + (h * nose.y - h * neck.y) ** 2)),
+            "nose": nose,
+            "neck": neck,
+            "dist": int(math.sqrt((nose[0] - neck[0]) ** 2 + (nose[1] - neck[1]) ** 2)),
         }
 
     return None
@@ -646,7 +632,7 @@ def draw_box(coordinates, img):
     cv2.line(img, (coordinates["ul"][0], coordinates["ul"][1]), (coordinates["ll"][0], coordinates["ll"][1]), color=color, thickness=2)
     cv2.line(img, (coordinates["ll"][0], coordinates["ll"][1]), (coordinates["lr"][0], coordinates["lr"][1]), color=color, thickness=2)
     cv2.line(img, (coordinates["lr"][0], coordinates["lr"][1]), (coordinates["ur"][0], coordinates["ur"][1]), color=color, thickness=2)
-
+    cv2.line(img, coordinates["nose"], coordinates["neck"], color=color, thickness=2)
     # filename = os.path.basename(f"{time.time_ns()}.png")
     # cv2.imwrite(f"outputs/{filename}", img)
 
