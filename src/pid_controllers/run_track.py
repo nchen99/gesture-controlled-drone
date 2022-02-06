@@ -70,7 +70,12 @@ def parser():
     parser.add_argument("--flight_name", help="Flight run name", default=None)
     parser.add_argument("--use_ps",  type=bool, help="Forward flight video to Presenter Server if True", default=False)
     parser.add_argument("--duration", "-d", type=int, help="Flight duration (in seconds)", default=120)
+
+
     parser.add_argument("--tracker", "-t", help="Tracker name (i.e.: PIDFaceTracker)", default="PIDOpenPoseTracker")
+    # parser.add_argument("--tracker", "-t", help="Tracker name (i.e.: PIDFaceTracker)", default="PIDFaceTracker")
+
+
     parser.add_argument("--pid", nargs="+", help="PID List", default=[0.1, 0.1, 0.1])
     parser.add_argument("--save_flight", type=bool, help="Save flight statistics to pkl if True", default=False)
     parser.add_argument("--inference_filter", type=str, help="Inference Filter name", default="DecisionFilter")
@@ -102,7 +107,7 @@ if __name__ == "__main__":
             if not tookoff:
                 tookoff = True
                 tracker.uav.takeoff()
-                tracker.uav.move_up(70)
+                # tracker.uav.move_up(70)
             
             if time.time() > timeout:        
                 tracker.uav.land()
