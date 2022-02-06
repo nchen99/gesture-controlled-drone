@@ -32,7 +32,7 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.inference_filter = inference_filter    # A fully instantiated InferenceFilter object  
         # ------------------------------- Don't forget to change the value here------------
         print("PIDOpenPoseTracker.py line 34, don't forget to change the variables")
-        self.setpoint_area = (20000, 100000)        # Lower and Upper bound for Forward&Backward Range-of-Motion - can be adjusted    
+        self.setpoint_area = (2500, 4000)        # Lower and Upper bound for Forward&Backward Range-of-Motion - can be adjusted    
         # ------------------------------- Don't forget to change the value here------------
         self.save_flight_hist = save_flight_hist
 
