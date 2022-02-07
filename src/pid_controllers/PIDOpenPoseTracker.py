@@ -110,7 +110,7 @@ class PIDOpenPoseTracker(TelloPIDController):
         elif dist < self.setpoint_area[0]:
             forward_backward_velocity = 20
         elif dist > self.setpoint_area[1]:
-            forward_backward_velocity = -20
+            forward_backward_velocity = -25
 
 
         if result["right_arm_up"]:
