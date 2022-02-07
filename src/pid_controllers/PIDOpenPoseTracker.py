@@ -114,12 +114,12 @@ class PIDOpenPoseTracker(TelloPIDController):
 
 
         if result["right_arm_up"]:
-            left_right_velocity -= 20
-            yaw_velocity += 20
+            left_right_velocity -= 35
+            yaw_velocity += 30
         
         if result["left_arm_up"]:
-            left_right_velocity += 20
-            yaw_velocity -= 20
+            left_right_velocity += 35
+            yaw_velocity -= 30
 
         # Saves run history in a list for serialization
         if self.save_flight_hist:
@@ -209,7 +209,7 @@ class PIDOpenPoseTracker(TelloPIDController):
     
     def run_state_machine(self, frame, prev_x_err, prev_y_err):
         result_img, result = self._manage_state(frame)
-        if self.search_mode:
+        if self.search_mode or result is None:
             self._search()
             return prev_x_err, prev_y_err, result_img
         elif self.track_mode:

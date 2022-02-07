@@ -125,7 +125,12 @@ if __name__ == "__main__":
                 send_to_presenter_server(chan, frame_org, result_img)
 
         except (KeyboardInterrupt, Exception) as e:
-            tracker.uav.land()
+            try:
+                tracker.uav.land()
+            except:
+                while True:
+                    tracker.uav.land()
+            
             tracker.uav.streamoff()
             print("Something bad happened. See information below for more details.s")
             print(e)
