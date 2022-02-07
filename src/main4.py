@@ -17,7 +17,7 @@ def show(chan, frame):
 
 if __name__ == "__main__":
     uav_presenter_conf = params["presenter_server_conf"]
-    chan = presenter_channel.open_channel(uav_presenter_conf)
+    # chan = presenter_channel.open_channel(uav_presenter_conf)
     tello = Tello()
     tello.connect()
     print(tello.get_battery(), "\n\n\n")
@@ -39,7 +39,7 @@ if __name__ == "__main__":
             continue
         results = openpose_tf.get_bounding_box(img)
         print(results)
-        show(chan, img)
+        # show(chan, img)
         # if len(results) == 0:
         #     continue
         # print(results[0]["area"])

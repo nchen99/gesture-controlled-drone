@@ -583,6 +583,18 @@ def get_bounding_box(img):
 
     return results
 
+def check_pose_func(pose, human):
+    global threshold
+
+    bp = human.body_parts
+
+    for entry in pose:
+        if set(entry["req"]) <= set(bp):
+            if entry["check"](bp):
+                return True
+
+    return False
+
 
 def calculate_bounding_box(human, h, w):
     # logic: check for identifiable points
@@ -620,6 +632,8 @@ def calculate_bounding_box(human, h, w):
             "nose": nose,
             "neck": neck,
             "dist": int(math.sqrt((nose[0] - neck[0]) ** 2 + (nose[1] - neck[1]) ** 2)),
+            "right_arm_up": check_pose_func(check_pose[Pose.RIGHT_ARM_UP], human),
+            "left_arm_up": check_pose_func(check_pose[Pose.LEFT_ARM_UP], human),
         }
 
     return None

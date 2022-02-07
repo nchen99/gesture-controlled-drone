@@ -61,7 +61,7 @@ class PIDOpenPoseTracker(TelloPIDController):
         # return frame, (process_var_bbox_area, process_var_bbox_center)
 
 
-    def _pid_controller(self, process_vars, prev_x_err, prev_y_err):
+    def _pid_controller(self, result, prev_x_err, prev_y_err):
         """Closed-Loop PID Object Tracker (Compensator + Actuator)
         Calculates the Error value from Process variables and compute the require adjustment for the drone. 
 
@@ -76,7 +76,7 @@ class PIDOpenPoseTracker(TelloPIDController):
         Returns
             x_err, y_err   - current control loop error 
         """
-        dist, center = process_vars[0], process_vars[1]
+        dist, center = result["dist"], result["center"]
 
         if dist == 0 and center is None:
             return prev_x_err, prev_y_err
@@ -89,6 +89,13 @@ class PIDOpenPoseTracker(TelloPIDController):
         left_right_velocity = 0
         up_down_velocity = 0
         yaw_velocity = 0
+
+        if result["right_arm_up"]:
+            left_right_velocity += 10
+        
+        if result["left_arm_up"]:
+            left_right_velocity -= 10
+
 
         # Compensator: calcuate the amount adjustment needed in YAW axis and distance
         # Localization of ToI to the center x-axis - adjusts camera angle
@@ -127,8 +134,8 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.uav.send_rc_control(left_right_velocity, forward_backward_velocity, up_down_velocity, yaw_velocity)
         return x_err, y_err
 
-    def _track(self, process_vars, prev_x_err, prev_y_err):
-        x_err, y_err = self._pid_controller(process_vars, prev_x_err, prev_y_err)
+    def _track(self, result, prev_x_err, prev_y_err):
+        x_err, y_err = self._pid_controller(result, prev_x_err, prev_y_err)
         return x_err, y_err
 
     def _search(self):
@@ -168,7 +175,8 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.neck = result["neck"]
         
         # ----------------------------------- area is not used here!!! -------------------------
-        dist, center = result["dist"], result["center"]
+        # dist, center = result["dist"], result["center"]s
+        center = result["center"]
 
         cur_mode = "TRACK" if self.track_mode else "SEARCH"
         sample_val = center if center is None else "Presence"
@@ -192,15 +200,15 @@ class PIDOpenPoseTracker(TelloPIDController):
             print("\n######################################################")
             print(f"Mode switched from {cur_mode} to {new_mode}")
 
-        return frame, (dist, center)
+        return frame, result
     
     def run_state_machine(self, frame, prev_x_err, prev_y_err):
-        result_img, process_vars = self._manage_state(frame)
-        if self.search_mode or process_vars is None:
+        result_img, result = self._manage_state(frame)
+        if self.search_mode:
             self._search()
             return prev_x_err, prev_y_err, result_img
         elif self.track_mode:
-            x_err, y_err = self._track(process_vars, prev_x_err, prev_y_err)
+            x_err, y_err = self._track(result, prev_x_err, prev_y_err)
             return x_err, y_err, result_img
     
     def __repr__(self):
