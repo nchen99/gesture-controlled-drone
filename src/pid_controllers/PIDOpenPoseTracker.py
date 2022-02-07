@@ -135,8 +135,6 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.uav.send_rc_control(0,0,0,20)
         return
 
-    def calculate_diff(p1, p2):
-        return math.sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2)
 
 
     def _manage_state(self, frame):
@@ -155,19 +153,18 @@ class PIDOpenPoseTracker(TelloPIDController):
             return None, None
 
         result = results[0]
-        if self.nose == None or self.neck == None:
-            # search someone with the largest dist:
-            result = max(results, key = lambda i : i["dist"])
+        # if self.nose == None or self.neck == None:
+        #     # search someone with the largest dist:
+        #     result = max(results, key = lambda i : i["dist"])
 
-        else:
-            # search with lowest difference:
-            result = min(results, key = lambda i : max(
-                self.calculate_diff(i["nose"], self.nose),
-                self.calculate_diff(i["neck"], self.neck)
-            ))
+        # else:
+        #     calc_dist = lambda p1, p2 : math.sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2)
+        #     max_dist = lambda i : max(calc_dist(i["nose"], self.nose), calc_dist(i["neck"], self.neck))
+        #     # search with lowest difference:
+        #     result = min(results, key=max_dist)
             
-        self.nose = result["nose"]
-        self.neck = result["neck"]
+        # self.nose = result["nose"]
+        # self.neck = result["neck"]
         
         # ----------------------------------- area is not used here!!! -------------------------
         dist, center = result["dist"], result["center"]
