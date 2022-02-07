@@ -9,6 +9,7 @@ from model_processors.FaceDetectionProcessor import sigmoid, yolo_head, yolo_cor
 from TelloPIDController import TelloPIDController
 import openpose_tf
 import math
+import time
 
 class PIDOpenPoseTracker(TelloPIDController):
     """
@@ -176,6 +177,10 @@ class PIDOpenPoseTracker(TelloPIDController):
         if filtered_result == "MODE_INFERENCE_SAMPLING":
             pass
         elif filtered_result == "Presence": 
+            if not self.track_mode and self.search_mode:
+                # self.uav.move_up(50)
+                # self.uav.move_down(50)
+                self.uav.flip_left()
             self.track_mode = True
             self.search_mode = False
         elif filtered_result is None:

@@ -80,7 +80,7 @@ def parser():
     parser.add_argument("--save_flight", type=bool, help="Save flight statistics to pkl if True", default=False)
     parser.add_argument("--inference_filter", type=str, help="Inference Filter name", default="DecisionFilter")
     parser.add_argument("--if_fps", type=int, help="Incoming FPS for inference filter", default=5)
-    parser.add_argument("--if_window", type=int, help="Observation window for inference filter", default=3)
+    parser.add_argument("--if_window", type=int, help="Observation window for inference filter", default=4)
 
     args = parser.parse_args()
     return args
