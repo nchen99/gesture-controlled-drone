@@ -153,18 +153,18 @@ class PIDOpenPoseTracker(TelloPIDController):
             return None, None
 
         result = results[0]
-        # if self.nose == None or self.neck == None:
-        #     # search someone with the largest dist:
-        #     result = max(results, key = lambda i : i["dist"])
+        if self.nose == None or self.neck == None:
+            # search someone with the largest dist:
+            result = max(results, key = lambda i : i["dist"])
 
-        # else:
-        #     calc_dist = lambda p1, p2 : math.sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2)
-        #     max_dist = lambda i : max(calc_dist(i["nose"], self.nose), calc_dist(i["neck"], self.neck))
-        #     # search with lowest difference:
-        #     result = min(results, key=max_dist)
+        else:
+            calc_dist = lambda p1, p2 : math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+            max_dist = lambda i : max(calc_dist(i["nose"], self.nose), calc_dist(i["neck"], self.neck))
+            # search with lowest difference:
+            result = min(results, key=max_dist)
             
-        # self.nose = result["nose"]
-        # self.neck = result["neck"]
+        self.nose = result["nose"]
+        self.neck = result["neck"]
         
         # ----------------------------------- area is not used here!!! -------------------------
         dist, center = result["dist"], result["center"]
