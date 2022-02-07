@@ -90,18 +90,14 @@ class PIDOpenPoseTracker(TelloPIDController):
         up_down_velocity = 0
         yaw_velocity = 0
 
-        if result["right_arm_up"]:
-            left_right_velocity += 10
-        
-        if result["left_arm_up"]:
-            left_right_velocity -= 10
-
 
         # Compensator: calcuate the amount adjustment needed in YAW axis and distance
         # Localization of ToI to the center x-axis - adjusts camera angle
         if x_err != 0:
             yaw_velocity = 1.2 * self._pid(x_err, prev_x_err)
-            yaw_velocity = int(np.clip(yaw_velocity, -120, 10))
+            yaw_velocity = int(np.clip(yaw_velocity, -120, 120))
+
+        
 
         # Localization of ToI to the center y-axis - adjust altitude 
         if y_err != 0:
@@ -115,6 +111,15 @@ class PIDOpenPoseTracker(TelloPIDController):
             forward_backward_velocity = 20
         elif dist > self.setpoint_area[1]:
             forward_backward_velocity = -20
+
+
+        if result["right_arm_up"]:
+            left_right_velocity -= 20
+            yaw_velocity += 20
+        
+        if result["left_arm_up"]:
+            left_right_velocity += 20
+            yaw_velocity -= 20
 
         # Saves run history in a list for serialization
         if self.save_flight_hist:
