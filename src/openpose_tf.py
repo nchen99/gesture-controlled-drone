@@ -12,7 +12,6 @@ limitations under the License.
 """
 
 import os
-from turtle import right
 import cv2
 import numpy as np
 import argparse
@@ -584,7 +583,7 @@ def get_bounding_box(img):
 
     return results
 
-def check_pose(pose, human):
+def check_pose_func(pose, human):
     global threshold
 
     bp = human.body_parts
@@ -633,8 +632,8 @@ def calculate_bounding_box(human, h, w):
             "nose": nose,
             "neck": neck,
             "dist": int(math.sqrt((nose[0] - neck[0]) ** 2 + (nose[1] - neck[1]) ** 2)),
-            "right_arm_up": check_pose(check_pose[Pose.RIGHT_ARM_UP], human),
-            "left_arm_up": check_pose(check_pose[Pose.LEFT_ARM_UP], human),
+            "right_arm_up": check_pose_func(check_pose[Pose.RIGHT_ARM_UP], human),
+            "left_arm_up": check_pose_func(check_pose[Pose.LEFT_ARM_UP], human),
         }
 
     return None
