@@ -8,6 +8,7 @@ from inference_filters.DecisionFilter import DecisionFilter
 from model_processors.FaceDetectionProcessor import sigmoid, yolo_head, yolo_correct_boxes, yolo_boxes_and_scores, nms, yolo_eval, get_box_img
 from TelloPIDController import TelloPIDController
 import openpose_tf
+import math
 
 class PIDOpenPoseTracker(TelloPIDController):
     """
@@ -35,6 +36,8 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.setpoint_area = (80, 120)        # Lower and Upper bound for Forward&Backward Range-of-Motion - can be adjusted    
         # ------------------------------- Don't forget to change the value here------------
         self.save_flight_hist = save_flight_hist
+        self.nose = None
+        self.neck = None
 
            
     def _unpack_feedback(self, frame):
@@ -132,6 +135,10 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.uav.send_rc_control(0,0,0,20)
         return
 
+    def calculate_diff(p1, p2):
+        return math.sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2)
+
+
     def _manage_state(self, frame):
         """State Manager
         Infer surroundings to check if ToI is present, pass feedback to Filter to smooth out detection result. Break out of Search Mode 
@@ -143,10 +150,39 @@ class PIDOpenPoseTracker(TelloPIDController):
             result_img   - inference result superimposed on frame
             process_vars - Tuple(bbox_area, bbox_center) of process variables
         """
-        result = self._unpack_feedback(frame)
-        if len(result) == 0:
+        results = self._unpack_feedback(frame)
+        if len(results) == 0:
             return None, None
-        result = result[0]
+
+        result = results[0]
+        if self.nose == None or self.neck == None:
+            # search someone with the largest dist:
+            dist = 0
+            for r in results:
+                if r["dist"] > dist:
+                    result = r
+                    dist = r["dist"]
+                    self.nose = r["nose"]
+                    self.neck = r["neck"]
+        else:
+            # search with lowest difference:
+            diff = np.inf
+            cur_nose = None
+            cur_neck = None
+            for r in results:
+                diff_nose = self.calculate_diff(r["nose"], self.nose)
+                diff_neck = self.calculate_diff(r["neck"], self.neck)
+                cur_diff = max(diff_nose, diff_neck)
+
+                if cur_diff < diff:
+                    result = r
+                    cur_nose = r["nose"]
+                    cur_neck = r["neck"]
+                    diff = cur_diff
+
+            self.nose = cur_nose
+            self.neck = cur_neck
+        
         # ----------------------------------- area is not used here!!! -------------------------
         dist, center = result["dist"], result["center"]
 
