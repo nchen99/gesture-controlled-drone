@@ -105,9 +105,9 @@ class PIDOpenPoseTracker(TelloPIDController):
         if dist > self.setpoint_area[0] and dist < self.setpoint_area[1]:
             forward_backward_velocity = 0
         elif dist < self.setpoint_area[0]:
-            forward_backward_velocity = 30
+            forward_backward_velocity = 20
         elif dist > self.setpoint_area[1]:
-            forward_backward_velocity = -30
+            forward_backward_velocity = -20
 
         # Saves run history in a list for serialization
         if self.save_flight_hist:
@@ -196,7 +196,7 @@ class PIDOpenPoseTracker(TelloPIDController):
     
     def run_state_machine(self, frame, prev_x_err, prev_y_err):
         result_img, process_vars = self._manage_state(frame)
-        if self.search_mode:
+        if self.search_mode or process_vars is None:
             self._search()
             return prev_x_err, prev_y_err, result_img
         elif self.track_mode:
