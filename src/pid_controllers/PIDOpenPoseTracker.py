@@ -9,6 +9,7 @@ from model_processors.FaceDetectionProcessor import sigmoid, yolo_head, yolo_cor
 from TelloPIDController import TelloPIDController
 import openpose_tf
 import math
+import time
 
 class PIDOpenPoseTracker(TelloPIDController):
     """
@@ -89,18 +90,14 @@ class PIDOpenPoseTracker(TelloPIDController):
         up_down_velocity = 0
         yaw_velocity = 0
 
-        if result["right_arm_up"]:
-            left_right_velocity += 10
-        
-        if result["left_arm_up"]:
-            left_right_velocity -= 10
-
 
         # Compensator: calcuate the amount adjustment needed in YAW axis and distance
         # Localization of ToI to the center x-axis - adjusts camera angle
         if x_err != 0:
             yaw_velocity = 1.2 * self._pid(x_err, prev_x_err)
-            yaw_velocity = int(np.clip(yaw_velocity, -120, 10))
+            yaw_velocity = int(np.clip(yaw_velocity, -120, 120))
+
+        
 
         # Localization of ToI to the center y-axis - adjust altitude 
         if y_err != 0:
@@ -111,9 +108,18 @@ class PIDOpenPoseTracker(TelloPIDController):
         if dist > self.setpoint_area[0] and dist < self.setpoint_area[1]:
             forward_backward_velocity = 0
         elif dist < self.setpoint_area[0]:
-            forward_backward_velocity = 30
+            forward_backward_velocity = 20
         elif dist > self.setpoint_area[1]:
-            forward_backward_velocity = -30
+            forward_backward_velocity = -20
+
+
+        if result["right_arm_up"]:
+            left_right_velocity -= 20
+            yaw_velocity += 20
+        
+        if result["left_arm_up"]:
+            left_right_velocity += 20
+            yaw_velocity -= 20
 
         # Saves run history in a list for serialization
         if self.save_flight_hist:
@@ -184,6 +190,10 @@ class PIDOpenPoseTracker(TelloPIDController):
         if filtered_result == "MODE_INFERENCE_SAMPLING":
             pass
         elif filtered_result == "Presence": 
+            if not self.track_mode and self.search_mode:
+                # self.uav.move_up(50)
+                # self.uav.move_down(50)
+                self.uav.flip_left()
             self.track_mode = True
             self.search_mode = False
         elif filtered_result is None:

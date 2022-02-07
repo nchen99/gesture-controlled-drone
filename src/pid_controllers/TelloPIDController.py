@@ -82,7 +82,9 @@ class TelloPIDController:
             print("UAV connected successfully!")
             print(f"Current battery percentage: {self.uav.get_battery()}")
             self.uav.streamoff()
-            self.uav.streamon()   
+            self.uav.streamon()
+            frame = self.fetch_frame()
+            print("frame: ", frame)
         except Exception as e:
             raise Exception("Failed to connect to Tello UAV, please try to reconnect")
 

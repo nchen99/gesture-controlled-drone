@@ -13,6 +13,7 @@ import cv2
 from importlib import import_module
 from datetime import datetime
 import argparse
+import traceback
 
 sys.path.append("..")
 sys.path.append("../lib")
@@ -68,8 +69,8 @@ def initialize_tracker(args):
 def parser():
     parser = argparse.ArgumentParser(description="Tello UAV PID-Tracker Setting")
     parser.add_argument("--flight_name", help="Flight run name", default=None)
-    parser.add_argument("--use_ps",  type=bool, help="Forward flight video to Presenter Server if True", default=True)
-    parser.add_argument("--duration", "-d", type=int, help="Flight duration (in seconds)", default=120)
+    parser.add_argument("--use_ps",  type=bool, help="Forward flight video to Presenter Server if True", default=False)
+    parser.add_argument("--duration", "-d", type=int, help="Flight duration (in seconds)", default=300)
 
 
     parser.add_argument("--tracker", "-t", help="Tracker name (i.e.: PIDFaceTracker)", default="PIDOpenPoseTracker")
@@ -107,14 +108,17 @@ if __name__ == "__main__":
             if not tookoff:
                 tookoff = True
                 tracker.uav.takeoff()
-                # tracker.uav.move_up(70)
+                tracker.uav.move_up(90)
             
-            if time.time() > timeout:        
+            if time.time() > timeout:   
+                print("Timeout\n\n")     
                 tracker.uav.land()
                 tracker.uav.streamoff()
                 flight_end = True
             
             frame_org = tracker.fetch_frame()
+            if frame_org is None:
+                continue
             x_err, y_err, result_img = tracker.run_state_machine(frame_org, x_err, y_err)
 
             if args.use_ps:
@@ -123,7 +127,9 @@ if __name__ == "__main__":
         except (KeyboardInterrupt, Exception) as e:
             tracker.uav.land()
             tracker.uav.streamoff()
+            print("Something bad happened. See information below for more details.s")
             print(e)
+            traceback.print_exc()
             break
 
     if args.save_flight:
