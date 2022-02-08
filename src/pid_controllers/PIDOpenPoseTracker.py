@@ -40,7 +40,7 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.nose = None
         self.neck = None
 
-        self.inference_filter_land = DecisionFilter
+        self.inference_filter_land = DecisionFilter()
         self.waitingUntil = 0
         self.waiting_mode = False
 
@@ -225,8 +225,8 @@ class PIDOpenPoseTracker(TelloPIDController):
     def run_state_machine(self, frame, prev_x_err, prev_y_err):
         result_img, result = self._manage_state(frame)
 
-        if datetime.now() > self.waitingUntil:
-            self.waiting_mode = False
+        # if datetime.now() > self.waitingUntil:
+        #     self.waiting_mode = False
 
         if self.waiting_mode:
             self.nose = None
