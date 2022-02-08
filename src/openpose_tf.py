@@ -635,7 +635,7 @@ def calculate_bounding_box(human, h, w):
             "right_arm_up": check_pose_func(check_pose[Pose.RIGHT_ARM_UP], human),
             "left_arm_up": check_pose_func(check_pose[Pose.LEFT_ARM_UP], human),
             # TODO: Please add a pose for land here:
-            "land": False,
+            "land": check_pose_func(check_pose[Pose.BOTH_ARM_UP], human),
             # TODO: Please add a pose for unfollow (cross sign):
             "unfollow": False
         }
