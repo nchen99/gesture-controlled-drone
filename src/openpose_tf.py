@@ -634,8 +634,10 @@ def calculate_bounding_box(human, h, w):
             "dist": int(math.sqrt((nose[0] - neck[0]) ** 2 + (nose[1] - neck[1]) ** 2)),
             "right_arm_up": check_pose_func(check_pose[Pose.RIGHT_ARM_UP], human),
             "left_arm_up": check_pose_func(check_pose[Pose.LEFT_ARM_UP], human),
-            # TODO: Shawn please add a pose for land here:
-            "land": False 
+            # TODO: Please add a pose for land here:
+            "land": False,
+            # TODO: Please add a pose for unfollow (cross sign):
+            "unfollow": False
         }
 
     return None

@@ -9,7 +9,7 @@ from model_processors.FaceDetectionProcessor import sigmoid, yolo_head, yolo_cor
 from TelloPIDController import TelloPIDController
 import openpose_tf
 import math
-import time
+from datetime import datetime, timedelta
 
 class PIDOpenPoseTracker(TelloPIDController):
     """
@@ -41,6 +41,8 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.neck = None
 
         self.inference_filter_land = DecisionFilter
+        self.waitingUntil = 0
+        self.waiting_mode = False
 
            
     def _unpack_feedback(self, frame):
@@ -181,6 +183,11 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.nose = result["nose"]
         self.neck = result["neck"]
 
+        if result["unfollow"]:
+            self.waitingUntil = datetime.now() + timedelta(seconds=4)
+            self.waiting_mode = True
+
+
         is_land_signal = "Land" if result["land"] else "Float"
         is_land_filter = self.inference_filter_land.sample(result["land"])
         if is_land_filter == "Land":
@@ -217,7 +224,15 @@ class PIDOpenPoseTracker(TelloPIDController):
     
     def run_state_machine(self, frame, prev_x_err, prev_y_err):
         result_img, result = self._manage_state(frame)
-        if self.search_mode or result is None:
+
+        if datetime.now() > self.waitingUntil:
+            self.waiting_mode = False
+
+        if self.waiting_mode:
+            self.nose = None
+            self.neck = None
+            return 0, 0, result_img
+        elif self.search_mode or result is None:
             self._search()
             return prev_x_err, prev_y_err, result_img
         elif self.track_mode:
