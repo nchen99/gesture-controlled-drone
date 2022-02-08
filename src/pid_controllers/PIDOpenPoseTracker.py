@@ -188,9 +188,9 @@ class PIDOpenPoseTracker(TelloPIDController):
             self.waiting_mode = True
 
 
-        is_land_signal = "Land" if result["land"] else "Float"
+        is_land_signal = "Presence" if result["land"] else "Float"
         is_land_filter = self.inference_filter_land.sample(is_land_signal)
-        if is_land_filter == "Land":
+        if is_land_filter == "Presence":
             raise Exception('I should land!')
         
         # ----------------------------------- area is not used here!!! -------------------------
