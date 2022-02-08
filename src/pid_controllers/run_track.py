@@ -13,7 +13,6 @@ import cv2
 from importlib import import_module
 from datetime import datetime
 import argparse
-import os
 
 sys.path.append("..")
 sys.path.append("../lib")
@@ -21,7 +20,6 @@ sys.path.append("../lib")
 from utils.params import params
 from atlas_utils.presenteragent import presenter_channel
 from atlas_utils.acl_image import AclImage
-from utils.shared_variable import Shared
 
 
 def init_presenter_server():
@@ -61,18 +59,23 @@ def _init_filter(filter_name, **kwargs):
     filter_class =  getattr(inference_filter_module, filter_name)
     return filter_class(**kwargs)
 
-def initialize_tracker(args, uav):
+def initialize_tracker(args):
     inference_filter = _init_filter(filter_name=args.inference_filter, fps=args.if_fps, window=args.if_window)
     tracker = _init_tracker(tracker_name=args.tracker, pid=args.pid, inference_filter=inference_filter)
-    tracker.init_uav(uav)
+    tracker.init_uav()
     return tracker
 
 def parser():
     parser = argparse.ArgumentParser(description="Tello UAV PID-Tracker Setting")
     parser.add_argument("--flight_name", help="Flight run name", default=None)
-    parser.add_argument("--use_ps",  type=bool, help="Forward flight video to Presenter Server if True", default=False)
+    parser.add_argument("--use_ps",  type=bool, help="Forward flight video to Presenter Server if True", default=True)
     parser.add_argument("--duration", "-d", type=int, help="Flight duration (in seconds)", default=120)
-    parser.add_argument("--tracker", "-t", help="Tracker name (i.e.: PIDFaceTracker)", default="PIDFaceTracker")
+
+
+    parser.add_argument("--tracker", "-t", help="Tracker name (i.e.: PIDFaceTracker)", default="PIDOpenPoseTracker")
+    # parser.add_argument("--tracker", "-t", help="Tracker name (i.e.: PIDFaceTracker)", default="PIDFaceTracker")
+
+
     parser.add_argument("--pid", nargs="+", help="PID List", default=[0.1, 0.1, 0.1])
     parser.add_argument("--save_flight", type=bool, help="Save flight statistics to pkl if True", default=False)
     parser.add_argument("--inference_filter", type=str, help="Inference Filter name", default="DecisionFilter")
@@ -87,27 +90,35 @@ def send_to_presenter_server(chan, frame_org, result_img):
     jpeg_image = AclImage(jpeg_image, frame_org.shape[0], frame_org.shape[1], jpeg_image.size)
     chan.send_detection_data(frame_org.shape[0], frame_org.shape[1], jpeg_image, [])
 
-def init(uav, shouldFollowMe):
+if __name__ == "__main__":
     args = parser()
 
-    # if args.use_ps:
-    #     chan = init_presenter_server()
+    if args.use_ps:
+        chan = init_presenter_server()
 
     x_err, y_err = 0, 0
+    tookoff, flight_end = False, False
+    timeout = time.time() + args.duration
 
-    tracker = initialize_tracker(args, uav)
+    tracker = initialize_tracker(args)
 
-    while True:
-        if not shouldFollowMe.get():
-            time.sleep(0.1)
-            continue
-
+    while not flight_end:
         try:
+            if not tookoff:
+                tookoff = True
+                tracker.uav.takeoff()
+                # tracker.uav.move_up(70)
+            
+            if time.time() > timeout:        
+                tracker.uav.land()
+                tracker.uav.streamoff()
+                flight_end = True
+            
             frame_org = tracker.fetch_frame()
             x_err, y_err, result_img = tracker.run_state_machine(frame_org, x_err, y_err)
 
-            # if args.use_ps:
-            #     send_to_presenter_server(chan, frame_org, result_img)
+            if args.use_ps:
+                send_to_presenter_server(chan, frame_org, result_img)
 
         except (KeyboardInterrupt, Exception) as e:
             tracker.uav.land()

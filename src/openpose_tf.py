@@ -3,9 +3,7 @@
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,10 +28,12 @@ from atlas_utils.acl_resource import AclResource as AclLiteResource
 from atlas_utils.acl_model import Model as AclLiteModel
 
 
-MODEL_PATH = os.path.join("/home/HwHiAiUser/CPEN491/model/OpenPose_for_TensorFlow_BatchSize_1.om")
+MODEL_PATH = os.path.join(
+    "/home/HwHiAiUser/CPEN491/model/OpenPose_for_TensorFlow_BatchSize_1.om")
 IMAGE_PATH = sys.argv[1] if len(sys.argv) > 1 else "./assets/in.png"
 
 print("MODEL_PATH:", MODEL_PATH)
+
 
 class CocoPart(Enum):
     Nose = 0
@@ -55,6 +55,7 @@ class CocoPart(Enum):
     REar = 16
     LEar = 17
     Background = 18
+
 
 class BodyPart:
     """
@@ -79,11 +80,13 @@ class BodyPart:
     def __repr__(self):
         return self.__str__()
 
+
 def _include_part(part_list, part_idx):
     for part in part_list:
         if part_idx == part.part_idx:
             return True, part
     return False, None
+
 
 class Human:
     """
@@ -147,7 +150,8 @@ class Human:
         _LEar = CocoPart.LEar.value
 
         _THRESHOLD_PART_CONFIDENCE = 0.2
-        parts = [part for idx, part in self.body_parts.items() if part.score > _THRESHOLD_PART_CONFIDENCE]
+        parts = [part for idx, part in self.body_parts.items(
+        ) if part.score > _THRESHOLD_PART_CONFIDENCE]
 
         is_nose, part_nose = _include_part(parts, _NOSE)
         if not is_nose:
@@ -227,7 +231,8 @@ class Human:
         _RSHOULDER = CocoPart.RShoulder.value
         _LSHOULDER = CocoPart.LShoulder.value
         _THRESHOLD_PART_CONFIDENCE = 0.3
-        parts = [part for idx, part in self.body_parts.items() if part.score > _THRESHOLD_PART_CONFIDENCE]
+        parts = [part for idx, part in self.body_parts.items(
+        ) if part.score > _THRESHOLD_PART_CONFIDENCE]
         part_coords = [(img_w * part.x, img_h * part.y) for part in parts if
                        part.part_idx in [0, 1, 2, 5, 8, 11, 14, 15, 16, 17]]
 
@@ -286,6 +291,7 @@ class Human:
     def __repr__(self):
         return self.__str__()
 
+
 def pool2d(A, kernel_size, stride, padding, pool_mode='max'):
     '''
     2D Pooling
@@ -303,26 +309,28 @@ def pool2d(A, kernel_size, stride, padding, pool_mode='max'):
     output_shape = ((A.shape[0] - kernel_size)//stride + 1,
                     (A.shape[1] - kernel_size)//stride + 1)
     kernel_size = (kernel_size, kernel_size)
-    A_w = as_strided(A, shape = output_shape + kernel_size, 
-                        strides = (stride*A.strides[0],
-                                   stride*A.strides[1]) + A.strides)
+    A_w = as_strided(A, shape=output_shape + kernel_size,
+                     strides=(stride*A.strides[0],
+                              stride*A.strides[1]) + A.strides)
     A_w = A_w.reshape(-1, *kernel_size)
 
     # Return the result of pooling
     if pool_mode == 'max':
-        return A_w.max(axis=(1,2)).reshape(output_shape)
+        return A_w.max(axis=(1, 2)).reshape(output_shape)
     elif pool_mode == 'avg':
-        return A_w.mean(axis=(1,2)).reshape(output_shape)
-    
+        return A_w.mean(axis=(1, 2)).reshape(output_shape)
+
+
 def nms(heatmaps):
     results = np.empty_like(heatmaps)
     for i in range(heatmaps.shape[-1]):
-        heat = heatmaps[:,:,i]
+        heat = heatmaps[:, :, i]
         hmax = pool2d(heat, 3, 1, 1)
         keep = (hmax == heat).astype(float)
 
         results[:, :, i] = heat * keep
     return results
+
 
 def estimate_paf(peaks, heat_mat, paf_mat):
     pafprocess.process_paf(peaks, heat_mat, paf_mat)
@@ -350,45 +358,55 @@ def estimate_paf(peaks, heat_mat, paf_mat):
             human.score = score
             humans.append(human)
 
-
-
     return humans
+
 
 def draw(img, humans):
     # img = cv2.resize(img, None, fx=1/10, fy=1/10, interpolation=cv2.INTER_AREA)
     edges = [
         (CocoPart.Nose.value, CocoPart.Neck.value),
-        (CocoPart.Nose.value, CocoPart.LEye.value), (CocoPart.LEye.value, CocoPart.LEar.value),
-        (CocoPart.Nose.value, CocoPart.REye.value), (CocoPart.REye.value, CocoPart.REar.value),
-        (CocoPart.Neck.value, CocoPart.LShoulder.value), (CocoPart.Neck.value, CocoPart.RShoulder.value),
-        (CocoPart.LShoulder.value, CocoPart.LElbow.value), (CocoPart.RShoulder.value, CocoPart.RElbow.value),
-        (CocoPart.LElbow.value, CocoPart.LWrist.value), (CocoPart.RElbow, CocoPart.RWrist.value),
-        (CocoPart.Neck.value, CocoPart.LHip.value), (CocoPart.Neck, CocoPart.RHip.value),
-        (CocoPart.LHip.value, CocoPart.LKnee.value), (CocoPart.RHip, CocoPart.RKnee.value),
-        (CocoPart.LKnee.value, CocoPart.LAnkle.value), (CocoPart.RKnee, CocoPart.RAnkle.value)
+        (CocoPart.Nose.value, CocoPart.LEye.value), (CocoPart.LEye.value,
+                                                     CocoPart.LEar.value),
+        (CocoPart.Nose.value, CocoPart.REye.value), (CocoPart.REye.value,
+                                                     CocoPart.REar.value),
+        (CocoPart.Neck.value, CocoPart.LShoulder.value), (CocoPart.Neck.value,
+                                                          CocoPart.RShoulder.value),
+        (CocoPart.LShoulder.value,
+         CocoPart.LElbow.value), (CocoPart.RShoulder.value, CocoPart.RElbow.value),
+        (CocoPart.LElbow.value, CocoPart.LWrist.value), (CocoPart.RElbow.value,
+                                                         CocoPart.RWrist.value),
+        (CocoPart.Neck.value, CocoPart.LHip.value), (CocoPart.Neck.value,
+                                                     CocoPart.RHip.value),
+        (CocoPart.LHip.value, CocoPart.LKnee.value), (CocoPart.RHip.value,
+                                                      CocoPart.RKnee.value),
+        (CocoPart.LKnee.value, CocoPart.LAnkle.value), (CocoPart.RKnee.value,
+                                                        CocoPart.RAnkle.value)
     ]
     h, w, _ = img.shape
     for human in humans:
         color = list(np.random.random(size=3) * 256)
         for key, body_part in human.body_parts.items():
             center = (int(w*body_part.x), int(h*body_part.y))
-            cv2.circle(img, center, radius=3, thickness=-1, color=color)
+            cv2.circle(img, center, radius=4, thickness=-1, color=color)
 
         for edge in edges:
             if set(edge) <= set(human.body_parts):
                 p1, p2 = edge
-                start = (int(w*human.body_parts[p1].x), int(h*human.body_parts[p1].y))
-                end = (int(w*human.body_parts[p2].x), int(h*human.body_parts[p2].y))
+                start = (int(w*human.body_parts[p1].x),
+                         int(h*human.body_parts[p1].y))
+                end = (int(w*human.body_parts[p2].x),
+                       int(h*human.body_parts[p2].y))
                 cv2.line(img, start, end, color=color, thickness=2)
 
     pass
     filename = os.path.basename(f"{time.time_ns()}.png")
     cv2.imwrite(f"outputs/{filename}", img)
 
+
 def post_process(heat):
-    heatMat = heat[:,:,:19]
-    pafMat = heat[:,:,19:]
-    
+    heatMat = heat[:, :, :19]
+    pafMat = heat[:, :, 19:]
+
     ''' Visualize Heatmap '''
     # print(heatMat.shape, pafMat.shape)
     # for i in range(19):
@@ -401,12 +419,11 @@ def post_process(heat):
     humans = estimate_paf(peaks, heatMat, pafMat)
     return humans
 
+
 def pre_process(img, height=368, width=656):
     model_input = cv2.resize(img, (width, height))
 
     return model_input[None].astype(np.float32).copy()
-
-
 
 
 acl_resource = None
@@ -415,12 +432,12 @@ model = None
 
 class Pose(Enum):
     KEY_MISSING = -1
-    NONE = 0 # any
-    RIGHT_ARM_UP = 1 # right arm up
-    LEFT_ARM_UP = 2 # left hand up
-    BOTH_ARM_UP = 3 # double hand up
-    CLAP = 4 # hand together
-    CONFIRM = 5 # right hand to shoulder
+    NONE = 0  # any
+    RIGHT_ARM_UP = 1  # right arm up
+    CONFIRM = 2  # right hand to shoulder
+    BOTH_ARM_UP = 3  # double hand up
+    CLAP = 4  # hand together
+    LEFT_ARM_UP = 5  # left hand up
 
 
 threshold = 0.01
@@ -476,13 +493,15 @@ check_pose = {
     ]
 }
 
+boxReq = [CocoPart.Nose.value,
+          CocoPart.RShoulder.value, CocoPart.LShoulder.value, CocoPart.Neck.value]
+
 
 def analyze_pose(human):
     global threshold
     # print(human)
 
     bp = human.body_parts
-
 
     for pose in check_pose.keys():
         for entry in check_pose[pose]:
@@ -514,8 +533,8 @@ def analyze_pose(human):
     # return Pose.NONE
 
 
-
 def init(model_path):
+    print("hahahahah\n\n\n\n\n\n", model_path)
     global acl_resource, model
     acl_resource = AclLiteResource()
     acl_resource.init()
@@ -533,10 +552,89 @@ def get_pose(img):
     for human in humans:
         results.append(analyze_pose(human))
 
-    
-    # draw(img, humans)
+    draw(img, humans)
     # also include the cordinates? => can keep track of the target when there are multiple humans
     return results
+
+# returns an array of four coordinates to be used as bounding box
+
+
+
+
+def get_bounding_box(img):
+    global model
+    model_input = pre_process(img)
+    # print("model_input: ", model_input)
+    # print("model_input length: ", len(model_input))
+    output = model.execute([model_input])
+    humans = post_process(output[0][0])
+    results = []
+    # draw(img, humans)
+    for human in humans:
+        # processing here
+        result = calculate_bounding_box(human, img.shape[0], img.shape[1])
+        if result is None:
+            continue
+        results.append(result)
+        
+
+    for result in results:
+        draw_box(result, img)
+
+    return results
+
+
+def calculate_bounding_box(human, h, w):
+    # logic: check for identifiable points
+    # case 1: person is facing forward, all facial points are available
+    # => use nose as center point, shoulder distance as width, shoulder to nose distance as height
+    # case 2: person is facing sideways or backwards, in which we can only detect the neck, maybe a shoulder or two
+    # => neck = center of box, draw based on preset radius
+    # => alternatively return inconclusive and make the drone go into search mode until a box can be found
+    bp = human.body_parts
+    boxCoordinates = []
+    # print(bp)
+
+    # case1 => CocoPart.Nose.value, CocoPart.RShoulder.value, CocoPart.LShoulder.value
+    if(set(boxReq) <= set(bp)):
+        # center
+        x = bp[CocoPart.Nose.value].x
+        y = bp[CocoPart.Nose.value].y
+        dx = abs(bp[CocoPart.Nose.value].x - bp[CocoPart.RShoulder.value].x)
+        dy = abs(bp[CocoPart.Nose.value].y - bp[CocoPart.RShoulder.value].y)
+
+        convert = lambda i : (int(i.x * w), int(i.y * h))
+
+        nose = convert(bp[CocoPart.Nose.value])
+        neck = convert(bp[CocoPart.Neck.value])
+
+
+        # return boxCoordinates, (400000*dx*dy, [x, y])
+        return {
+            "ur": [int(w * (x + dx)), int(h * (y + dy))],
+            "ul": [int(w * (x - dx)), int(h * (y + dy))],
+            "ll": [int(w * (x - dx)), int(h * (y - dy))],
+            "lr": [int(w * (x + dx)), int(h * (y - dy))],
+            "center": [int(w * x), int(h * y)],
+            "area": int(2 * dx * w) * int(2 * dy * h),
+            "nose": nose,
+            "neck": neck,
+            "dist": int(math.sqrt((nose[0] - neck[0]) ** 2 + (nose[1] - neck[1]) ** 2)),
+        }
+
+    return None
+
+
+def draw_box(coordinates, img):
+    # print(coordinates)
+    color = (0, 255, 0)
+    cv2.line(img, (coordinates["ur"][0], coordinates["ur"][1]), (coordinates["ul"][0], coordinates["ul"][1]), color=color, thickness=2)
+    cv2.line(img, (coordinates["ul"][0], coordinates["ul"][1]), (coordinates["ll"][0], coordinates["ll"][1]), color=color, thickness=2)
+    cv2.line(img, (coordinates["ll"][0], coordinates["ll"][1]), (coordinates["lr"][0], coordinates["lr"][1]), color=color, thickness=2)
+    cv2.line(img, (coordinates["lr"][0], coordinates["lr"][1]), (coordinates["ur"][0], coordinates["ur"][1]), color=color, thickness=2)
+    cv2.line(img, coordinates["nose"], coordinates["neck"], color=color, thickness=2)
+    # filename = os.path.basename(f"{time.time_ns()}.png")
+    # cv2.imwrite(f"outputs/{filename}", img)
 
 
 # def main(model_path, img_path):
@@ -576,13 +674,14 @@ def main(model_path, img_path):
     print(get_pose(img))
 
 
-if __name__ == '__main__':   
+if __name__ == '__main__':
     description = 'Load a model for human pose estimation'
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--model', type=str, default=MODEL_PATH)
-    parser.add_argument('--img_path', type=str, default=IMAGE_PATH, help="input img path e.g. /path/to/image.png")
+    parser.add_argument('--img_path', type=str, default=IMAGE_PATH,
+                        help="input img path e.g. /path/to/image.png")
     # parser.add_argument('--output_dir', type=str, default="outputs", help="Output Path")
 
     args = parser.parse_args()
-    
+
     main(args.model, args.img_path)
