@@ -40,6 +40,8 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.nose = None
         self.neck = None
 
+        self.inference_filter_land = DecisionFilter
+
            
     def _unpack_feedback(self, frame):
         """ Extract Process Variables from model's inference output info of input frame. The largest bbox of the same ToI label will be marked as ToI
@@ -178,6 +180,11 @@ class PIDOpenPoseTracker(TelloPIDController):
             
         self.nose = result["nose"]
         self.neck = result["neck"]
+
+        is_land_signal = "Land" if result["land"] else "Float"
+        is_land_filter = self.inference_filter_land.sample(result["land"])
+        if is_land_filter == "Land":
+            raise Exception('I should land!')
         
         # ----------------------------------- area is not used here!!! -------------------------
         # dist, center = result["dist"], result["center"]s
@@ -186,6 +193,7 @@ class PIDOpenPoseTracker(TelloPIDController):
         cur_mode = "TRACK" if self.track_mode else "SEARCH"
         sample_val = center if center is None else "Presence"
         filtered_result = self.inference_filter.sample(sample_val)
+
 
         if filtered_result == "MODE_INFERENCE_SAMPLING":
             pass
