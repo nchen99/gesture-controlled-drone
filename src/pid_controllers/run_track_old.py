@@ -60,10 +60,10 @@ def _init_filter(filter_name, **kwargs):
     filter_class =  getattr(inference_filter_module, filter_name)
     return filter_class(**kwargs)
 
-def initialize_tracker(args, uav):
+def initialize_tracker(args):
     inference_filter = _init_filter(filter_name=args.inference_filter, fps=args.if_fps, window=args.if_window)
     tracker = _init_tracker(tracker_name=args.tracker, pid=args.pid, inference_filter=inference_filter)
-    tracker.init_uav(uav)
+    tracker.init_uav()
     return tracker
 
 def parser():
@@ -91,33 +91,55 @@ def send_to_presenter_server(chan, frame_org, result_img):
     jpeg_image = AclImage(jpeg_image, frame_org.shape[0], frame_org.shape[1], jpeg_image.size)
     chan.send_detection_data(frame_org.shape[0], frame_org.shape[1], jpeg_image, [])
 
-def init(uav, shouldFollowMe):
+if __name__ == "__main__":
     args = parser()
 
+    if args.use_ps:
+        chan = init_presenter_server()
+
     x_err, y_err = 0, 0
+    tookoff, flight_end = False, False
+    timeout = time.time() + args.duration
 
-    tracker = initialize_tracker(args, uav)
+    tracker = initialize_tracker(args)
 
-    while True:
-        if not shouldFollowMe.get():
-            time.sleep(0.1)
-            continue
-        
-        print("awesome")
+    while not flight_end:
         try:
+            if not tookoff:
+                tookoff = True
+                tracker.uav.takeoff()
+                tracker.uav.move_up(90)
+            
+            if time.time() > timeout:   
+                print("Timeout\n\n")     
+                tracker.uav.land()
+                tracker.uav.streamoff()
+                flight_end = True
+            
             frame_org = tracker.fetch_frame()
+            if frame_org is None:
+                continue
             x_err, y_err, result_img = tracker.run_state_machine(frame_org, x_err, y_err)
+
+            if args.use_ps:
+                send_to_presenter_server(chan, frame_org, result_img)
+
         except (KeyboardInterrupt, Exception) as e:
-            tracker.uav.land()
+            try:
+                tracker.uav.land()
+            except:
+                while True:
+                    tracker.uav.land()
+            
             tracker.uav.streamoff()
-            print("Something bad happened. Details:")
+            print("Something bad happened. See information below for more details.s")
             print(e)
             traceback.print_exc()
             break
-
 
     if args.save_flight:
         if not os.path.exists("flights_data"):
             os.mkdir("flights_data")
         save_file = gen_save_name(args.tracker) if args.flight_name is None else args.flight_name
         tracker.save_hist(save_file)
+
