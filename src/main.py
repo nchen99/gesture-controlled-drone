@@ -24,6 +24,8 @@ import os
 from utils.process_2 import process_2
 from multiprocessing import Process, Pipe
 
+from utils.send_mail import send_mail
+
 class State(Enum):
     INITIAL = 1
     TAKEOFF_CONFIRM = 2
@@ -73,11 +75,16 @@ def get_next_state(state, command):
         print(state)
         return state
 
+flight_id = "flight_id"
 def takeoff(tello, _):
+    global flight_id
     tello.takeoff()
     time.sleep(3)
     print("Moveing up")
     tello.move_up(30)
+    flight_id = time.ctime().replace(" ", "_")
+    os.mkdir("./outputs/{flight_id}")
+    print("Flight ID:", flight_id)
 
 def land(tello, _):
     tello.land()
@@ -100,9 +107,24 @@ def floating(_, parent_conn):
         following = False
 
 def take_picture(tello, _):
+    global flight_id
     print("I am in taking pictures mode.")
     frame = tello.get_frame_read().frame
-    cv2.imwrite("./picture.jpeg", frame)
+    cv2.imwrite(f"./outputs/{flight_id}/{time.time_ns()}.png", frame)
+
+
+# using email for now
+# TODO: need debugging
+# called when landing or on gestures?
+# include args if on gestures
+email = "shawnlu4@gmail.com"
+def upload_images():
+    global flight_id, email
+    files = []
+    for (dirpath, dirnames, filenames) in os.walk(f"./outputs/{flight_id}"):
+        for photo in filenames:
+            files.append(f"{dirpath}/{filenames}")
+    send_mail(email, f"Your flight photos on {flight id}", "Taken by gesture-controlled vlogging assistant", files=files)
 
 
 state_to_func = {
