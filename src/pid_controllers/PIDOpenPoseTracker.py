@@ -187,10 +187,8 @@ class PIDOpenPoseTracker(TelloPIDController):
             self.waitingUntil = datetime.now() + timedelta(seconds=4)
             self.waiting_mode = True
 
-
-        is_land_signal = "Presence" if result["land"] else "Float"
-        is_land_filter = self.inference_filter_land.sample(is_land_signal)
-        if is_land_filter == "Presence":
+        if result["land"]:
+            self.uav.send_rc_control(0,0,0,0)
             raise Exception('I should land!')
         
         # ----------------------------------- area is not used here!!! -------------------------
