@@ -42,6 +42,7 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.nose = None
         self.neck = None
         self.switch_control_timeout = time.time()
+        self.video = cv2.VideoWriter('./video.mp4', cv2.VideoWriter_fourcc(*'MP4V'), 10, (960, 720))
         # self.waitingUntil = 0
         # self.waiting_mode = False
 
@@ -167,6 +168,9 @@ class PIDOpenPoseTracker(TelloPIDController):
             process_vars - Tuple(bbox_area, bbox_center) of process variables
         """
         results = self._unpack_feedback(frame)
+
+        self.video.write(frame)
+
         if len(results) == 0:
             return None, None
 
@@ -198,6 +202,7 @@ class PIDOpenPoseTracker(TelloPIDController):
 
         if result["land"]:
             self.uav.send_rc_control(0,0,0,0)
+            self.video.release()
             cv2.imwrite("./landing_pic.png", frame)
             send_mail("shawnlu4@gmail.com", "Test landing picture", "body", files=["./landing_pic.png"])
             raise Exception('I should land!')
