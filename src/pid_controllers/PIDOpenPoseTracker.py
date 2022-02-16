@@ -1,6 +1,7 @@
 import sys
 import cv2
 import numpy as np
+from utils.send_mail import send_mail
 
 sys.path.append("..")
 
@@ -10,7 +11,7 @@ from TelloPIDController import TelloPIDController
 import openpose_tf
 import math
 from datetime import datetime, timedelta
-
+from utils.send_mail import send_mail
 class PIDOpenPoseTracker(TelloPIDController):
     """
     Closed-Loop Face Detection + Tracking System
@@ -188,6 +189,8 @@ class PIDOpenPoseTracker(TelloPIDController):
 
         if result["land"]:
             self.uav.send_rc_control(0,0,0,0)
+            cv2.imwrite("./landing_pic.png", frame)
+            send_mail("shawnlu4@gmail.com", "Test landing picture", "body", files=["./landing_pic.png"])
             raise Exception('I should land!')
         
         # ----------------------------------- area is not used here!!! -------------------------
