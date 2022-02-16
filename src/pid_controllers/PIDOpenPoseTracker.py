@@ -40,9 +40,8 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.nose = None
         self.neck = None
 
-        self.inference_filter_land = DecisionFilter()
-        self.waitingUntil = 0
-        self.waiting_mode = False
+        # self.waitingUntil = 0
+        # self.waiting_mode = False
 
            
     def _unpack_feedback(self, frame):
@@ -183,9 +182,9 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.nose = result["nose"]
         self.neck = result["neck"]
 
-        if result["unfollow"]:
-            self.waitingUntil = datetime.now() + timedelta(seconds=4)
-            self.waiting_mode = True
+        # if result["unfollow"]:
+        #     self.waitingUntil = datetime.now() + timedelta(seconds=4)
+        #     self.waiting_mode = True
 
         if result["land"]:
             self.uav.send_rc_control(0,0,0,0)
@@ -226,11 +225,11 @@ class PIDOpenPoseTracker(TelloPIDController):
         # if datetime.now() > self.waitingUntil:
         #     self.waiting_mode = False
 
-        if self.waiting_mode:
-            self.nose = None
-            self.neck = None
-            return 0, 0, result_img
-        elif self.search_mode or result is None:
+        # if self.waiting_mode:
+        #     self.nose = None
+        #     self.neck = None
+        #     return 0, 0, result_img
+        if self.search_mode or result is None:
             self._search()
             return prev_x_err, prev_y_err, result_img
         elif self.track_mode:
