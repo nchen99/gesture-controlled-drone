@@ -153,7 +153,11 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.uav.send_rc_control(0,0,0,20)
         return
 
-
+    def closest_human(self, humans):
+        calc_dist = lambda p1, p2 : math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+        max_dist = lambda i : max(calc_dist(i["nose"], self.nose), calc_dist(i["neck"], self.neck))
+        # search with lowest difference:
+        return min(humans, key=max_dist)
 
     def _manage_state(self, frame):
         """State Manager
@@ -176,10 +180,7 @@ class PIDOpenPoseTracker(TelloPIDController):
             result = max(results, key = lambda i : i["dist"])
 
         else:
-            calc_dist = lambda p1, p2 : math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
-            max_dist = lambda i : max(calc_dist(i["nose"], self.nose), calc_dist(i["neck"], self.neck))
-            # search with lowest difference:
-            result = min(results, key=max_dist)
+            result = self.closest_human(results)
             
 
         # if result["unfollow"]:
@@ -187,10 +188,11 @@ class PIDOpenPoseTracker(TelloPIDController):
         #     self.waiting_mode = True
 
         if result["clap"] and self.switch_control_timeout < time.time():
-            switch = [r for r in results if r["clap"] and r != result]
-            if len(switch) > 0:
+            
+            control_receivers = [r for r in results if r["clap"] and r != result]
+            if len(control_receivers) > 0:
                 self.switch_control_timeout = time.time() + 5
-                result = switch[0]
+                result = self.closest_human(control_receivers)
 
         self.nose = result["nose"]
         self.neck = result["neck"]
