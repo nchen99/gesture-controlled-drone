@@ -9,7 +9,7 @@ from model_processors.FaceDetectionProcessor import sigmoid, yolo_head, yolo_cor
 from TelloPIDController import TelloPIDController
 import openpose_tf
 import math
-import time
+from datetime import datetime, timedelta
 
 class PIDOpenPoseTracker(TelloPIDController):
     """
@@ -39,6 +39,9 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.save_flight_hist = save_flight_hist
         self.nose = None
         self.neck = None
+
+        # self.waitingUntil = 0
+        # self.waiting_mode = False
 
            
     def _unpack_feedback(self, frame):
@@ -178,6 +181,14 @@ class PIDOpenPoseTracker(TelloPIDController):
             
         self.nose = result["nose"]
         self.neck = result["neck"]
+
+        # if result["unfollow"]:
+        #     self.waitingUntil = datetime.now() + timedelta(seconds=4)
+        #     self.waiting_mode = True
+
+        if result["land"]:
+            self.uav.send_rc_control(0,0,0,0)
+            raise Exception('I should land!')
         
         # ----------------------------------- area is not used here!!! -------------------------
         # dist, center = result["dist"], result["center"]s
@@ -186,6 +197,7 @@ class PIDOpenPoseTracker(TelloPIDController):
         cur_mode = "TRACK" if self.track_mode else "SEARCH"
         sample_val = center if center is None else "Presence"
         filtered_result = self.inference_filter.sample(sample_val)
+
 
         if filtered_result == "MODE_INFERENCE_SAMPLING":
             pass
@@ -209,6 +221,14 @@ class PIDOpenPoseTracker(TelloPIDController):
     
     def run_state_machine(self, frame, prev_x_err, prev_y_err):
         result_img, result = self._manage_state(frame)
+
+        # if datetime.now() > self.waitingUntil:
+        #     self.waiting_mode = False
+
+        # if self.waiting_mode:
+        #     self.nose = None
+        #     self.neck = None
+        #     return 0, 0, result_img
         if self.search_mode or result is None:
             self._search()
             return prev_x_err, prev_y_err, result_img

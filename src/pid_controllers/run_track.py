@@ -108,7 +108,7 @@ if __name__ == "__main__":
             if not tookoff:
                 tookoff = True
                 tracker.uav.takeoff()
-                tracker.uav.move_up(90)
+                # tracker.uav.move_up(90)
             
             if time.time() > timeout:   
                 print("Timeout\n\n")     
