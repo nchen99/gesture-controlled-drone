@@ -12,6 +12,7 @@ import openpose_tf
 import math
 from datetime import datetime, timedelta
 from utils.send_mail import send_mail
+import time
 class PIDOpenPoseTracker(TelloPIDController):
     """
     Closed-Loop Face Detection + Tracking System
@@ -40,7 +41,7 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.save_flight_hist = save_flight_hist
         self.nose = None
         self.neck = None
-
+        self.switch_control_timeout = time.time()
         # self.waitingUntil = 0
         # self.waiting_mode = False
 
@@ -180,12 +181,20 @@ class PIDOpenPoseTracker(TelloPIDController):
             # search with lowest difference:
             result = min(results, key=max_dist)
             
-        self.nose = result["nose"]
-        self.neck = result["neck"]
 
         # if result["unfollow"]:
         #     self.waitingUntil = datetime.now() + timedelta(seconds=4)
         #     self.waiting_mode = True
+
+        if result["clap"] and self.switch_control_timeout < time.time():
+            switch = [r for r in results if r["clap"] and r != result]
+            if len(switch) > 0:
+                self.switch_control_timeout = time.time() + 5
+                result = switch[0]
+
+        self.nose = result["nose"]
+        self.neck = result["neck"]
+
 
         if result["land"]:
             self.uav.send_rc_control(0,0,0,0)
