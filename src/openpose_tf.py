@@ -29,7 +29,7 @@ from atlas_utils.acl_model import Model as AclLiteModel
 
 
 MODEL_PATH = os.path.join(
-    "/home/HwHiAiUser/CPEN491/model/OpenPose_for_TensorFlow_BatchSize_1.om")
+    "/home/HwHiAiUser/gesture-controlled-drone/model/OpenPose_for_TensorFlow_BatchSize_1.om")
 IMAGE_PATH = sys.argv[1] if len(sys.argv) > 1 else "./assets/in.png"
 
 print("MODEL_PATH:", MODEL_PATH)
@@ -450,92 +450,63 @@ class Pose(Enum):
 # TODO: set a dynamic threshold based on how big the person is
 threshold = 0.01
 threshold2 = 0.1
+threshold3 = 0.05
 
 # If there are any pose that are really inconsistent (like confirm) do consider removing it to not intefere with other poses
 check_pose = {
     Pose.CONFIRM: [
         {
-            "req": [CocoPart.RWrist, CocoPart.RShoulder],
+            "req": [CocoPart.RWrist.value, CocoPart.RShoulder.value],
             "check": (lambda bp: (bp[CocoPart.RWrist.value].x - bp[CocoPart.RShoulder.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.RShoulder.value].y) ** 2 < threshold)
         },
     ],
     Pose.CLAP: [
         {
-            "req": [CocoPart.RWrist, CocoPart.LWrist],
+            "req": [CocoPart.RWrist.value, CocoPart.LWrist.value],
             "check": (lambda bp: (bp[CocoPart.RWrist.value].x - bp[CocoPart.LWrist.value].x) ** 2 + (bp[CocoPart.RWrist.value].y - bp[CocoPart.LWrist.value].y) ** 2 < threshold)
-        }
-    ],
-    Pose.BOTH_ARM_UP: [
-        {
-            "req": [CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LWrist, CocoPart.LShoulder],
-            "check": (lambda bp: bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y)
-        },
-        {
-            "req": [CocoPart.RElbow, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LShoulder],
-            "check": (lambda bp: bp[CocoPart.RElbow.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y < bp[CocoPart.LShoulder.value].y)
-        }
-    ],
-    Pose.RIGHT_ARM_UP: [
-        {
-            "req": [CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LWrist, CocoPart.LShoulder],
-            "check": (lambda bp: bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y > bp[CocoPart.LShoulder.value].y)
-        },
-        {
-            "req": [CocoPart.RElbow, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LShoulder],
-            "check": (lambda bp: bp[CocoPart.RElbow.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y > bp[CocoPart.LShoulder.value].y)
-        }
-    ],
-    Pose.LEFT_ARM_UP: [
-        {
-            "req": [CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LWrist, CocoPart.LShoulder],
-            "check": (lambda bp: bp[CocoPart.RWrist.value].y > bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y)
-        },
-        {
-            "req": [CocoPart.RElbow, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LShoulder],
-            "check": (lambda bp: bp[CocoPart.RElbow.value].y > bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y < bp[CocoPart.LShoulder.value].y)
         }
     ],
     # TODO: test these, i think they are quite gimicky
     # Also see if it will get recognized when doing the hands up pose
     Pose.BOTH_ARM_OUT: [
         {
-            "req": [CocoPart.RElbow, CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LWrist,
-                    CocoPart.LShoulder],
-            "check": (lambda bp: bp[CocoPart.LElbow.value].x - bp[CocoPart.LShoulder.value].x > threshold2 and
-                                 bp[CocoPart.LWrist.value].x - bp[CocoPart.LElbow.value].x > threshold2 and
-                                 bp[CocoPart.RShoulder.value].x - bp[CocoPart.RElbow.value].x > threshold2 and
-                                 bp[CocoPart.RElbow.value].x - bp[CocoPart.RWrist.value].x  > threshold2)
+            "req": [CocoPart.RElbow.value, CocoPart.RWrist.value, CocoPart.RShoulder.value, CocoPart.LElbow.value, CocoPart.LWrist.value,
+                    CocoPart.LShoulder.value],
+            "check": (lambda bp: abs(bp[CocoPart.LElbow.value].y - bp[CocoPart.LShoulder.value].y) < threshold3 and
+                                 abs(bp[CocoPart.LWrist.value].y - bp[CocoPart.LElbow.value].y) < threshold3 and
+                                 abs(bp[CocoPart.RShoulder.value].y - bp[CocoPart.RElbow.value].y) < threshold3 and
+                                 abs(bp[CocoPart.RElbow.value].y - bp[CocoPart.RWrist.value].y)  < threshold3)
         }
     ],
     Pose.LEFT_ARM_OUT: [
         {
-            "req": [CocoPart.RElbow, CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LWrist, CocoPart.LShoulder],
+            "req": [CocoPart.RElbow.value, CocoPart.RWrist.value, CocoPart.RShoulder.value, CocoPart.LElbow.value, CocoPart.LWrist.value, CocoPart.LShoulder.value],
             # Maybe put these as absolute value?
-            "check": (lambda bp: bp[CocoPart.LElbow.value].x - bp[CocoPart.LShoulder.value].x > threshold2 and
-                                 bp[CocoPart.LWrist.value].x - bp[CocoPart.LElbow.value].x > threshold2 and
-                                 bp[CocoPart.RShoulder.value].x - bp[CocoPart.RElbow.value].x < threshold2 and
-                                 bp[CocoPart.RElbow.value].x - bp[CocoPart.RWrist.value].x  < threshold2)
+            "check": (lambda bp: abs(bp[CocoPart.LElbow.value].y - bp[CocoPart.LShoulder.value].y) < threshold3 and
+                                 abs(bp[CocoPart.LWrist.value].y - bp[CocoPart.LElbow.value].y) < threshold3 and
+                                 bp[CocoPart.RShoulder.value].y < bp[CocoPart.RElbow.value].y and
+                                 bp[CocoPart.RElbow.value].y < bp[CocoPart.RWrist.value].y)
         }
     ],
     Pose.RIGHT_ARM_OUT: [
         {
-            "req": [CocoPart.RElbow, CocoPart.RWrist, CocoPart.RShoulder, CocoPart.LElbow, CocoPart.LWrist, CocoPart.LShoulder],
-            "check": (lambda bp: bp[CocoPart.LElbow.value].x - bp[CocoPart.LShoulder.value].x < threshold2 and
-                                 bp[CocoPart.LWrist.value].x - bp[CocoPart.LElbow.value].x < threshold2 and
-                                 bp[CocoPart.RShoulder.value].x - bp[CocoPart.RElbow.value].x > threshold2 and
-                                 bp[CocoPart.RElbow.value].x - bp[CocoPart.RWrist.value].x  > threshold2)
+            "req": [CocoPart.RElbow.value, CocoPart.RWrist.value, CocoPart.RShoulder.value, CocoPart.LElbow.value, CocoPart.LWrist.value, CocoPart.LShoulder.value],
+            "check": (lambda bp: bp[CocoPart.LElbow.value].y > bp[CocoPart.LShoulder.value].y and
+                                 bp[CocoPart.LWrist.value].y > bp[CocoPart.LElbow.value].y and
+                                 abs(bp[CocoPart.RShoulder.value].y - bp[CocoPart.RElbow.value].y) < threshold3 and
+                                 abs(bp[CocoPart.RElbow.value].y - bp[CocoPart.RWrist.value].y)  < threshold3)
         }
     ],
     Pose.ARM_CROSSED_HIGH: [
         {
-            "req": [CocoPart.RWrist, CocoPart.LWrist, CocoPart.LElbow],
+            "req": [CocoPart.RWrist.value, CocoPart.LWrist.value, CocoPart.LElbow.value],
             "check": (lambda bp: bp[CocoPart.RWrist.value].x - bp[CocoPart.LWrist.value].x > threshold2 and
                                  bp[CocoPart.LWrist.value].y > bp[CocoPart.LElbow.value].y)
         }
     ],
     Pose.ARM_CROSSED_LOW: [
         {
-            "req": [CocoPart.RWrist, CocoPart.LWrist, CocoPart.LElbow],
+            "req": [CocoPart.RWrist.value, CocoPart.LWrist.value, CocoPart.LElbow.value],
             "check": (lambda bp: bp[CocoPart.RWrist.value].x - bp[CocoPart.LWrist.value].x > threshold2 and
                                  bp[CocoPart.LWrist.value].y < bp[CocoPart.LElbow.value].y)
         }
@@ -543,16 +514,46 @@ check_pose = {
     # Left wave will override the right wave if they are done at the same time
     Pose.LEFT_WAVE: [
         {
-            "req": [CocoPart.LElbow, CocoPart.LWrist, CocoPart.LShoulder],
-            "check": (lambda bp: bp[CocoPart.LElbow.value].y < bp[CocoPart.LShoulder.value].y and
-                                 bp[CocoPart.LWrist.value].y > bp[CocoPart.LShoulder.value].y)
+            "req": [CocoPart.LElbow.value, CocoPart.LWrist.value, CocoPart.LShoulder.value],
+            "check": (lambda bp: abs(bp[CocoPart.LElbow.value].y - bp[CocoPart.LShoulder.value].y) < threshold3 and
+                                 bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y)
         }
     ],
     Pose.RIGHT_WAVE: [
         {
-            "req": [CocoPart.RElbow, CocoPart.RWrist, CocoPart.RShoulder],
-            "check": (lambda bp: bp[CocoPart.RElbow.value].y < bp[CocoPart.RShoulder.value].y and
-                                 bp[CocoPart.RWrist.value].y > bp[CocoPart.RShoulder.value].y)
+            "req": [CocoPart.RElbow.value, CocoPart.RWrist.value, CocoPart.RShoulder.value],
+            "check": (lambda bp: abs(bp[CocoPart.RElbow.value].y - bp[CocoPart.RShoulder.value].y) < threshold3 and
+                                 bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y)
+        }
+    ],
+    Pose.BOTH_ARM_UP: [
+        {
+            "req": [CocoPart.RWrist.value, CocoPart.RShoulder.value, CocoPart.LWrist.value, CocoPart.LShoulder.value],
+            "check": (lambda bp: bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y)
+        },
+        {
+            "req": [CocoPart.RElbow.value, CocoPart.RShoulder.value, CocoPart.LElbow.value, CocoPart.LShoulder.value],
+            "check": (lambda bp: bp[CocoPart.RElbow.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y < bp[CocoPart.LShoulder.value].y)
+        }
+    ],
+    Pose.RIGHT_ARM_UP: [
+        {
+            "req": [CocoPart.RWrist.value, CocoPart.RShoulder.value, CocoPart.LWrist.value, CocoPart.LShoulder.value],
+            "check": (lambda bp: bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y > bp[CocoPart.LShoulder.value].y)
+        },
+        {
+            "req": [CocoPart.RElbow.value, CocoPart.RShoulder.value, CocoPart.LElbow.value, CocoPart.LShoulder.value],
+            "check": (lambda bp: bp[CocoPart.RElbow.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y > bp[CocoPart.LShoulder.value].y)
+        }
+    ],
+    Pose.LEFT_ARM_UP: [
+        {
+            "req": [CocoPart.RWrist.value, CocoPart.RShoulder.value, CocoPart.LWrist.value, CocoPart.LShoulder.value],
+            "check": (lambda bp: bp[CocoPart.RWrist.value].y > bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y)
+        },
+        {
+            "req": [CocoPart.RElbow.value, CocoPart.RShoulder.value, CocoPart.LElbow.value, CocoPart.LShoulder.value],
+            "check": (lambda bp: bp[CocoPart.RElbow.value].y > bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y < bp[CocoPart.LShoulder.value].y)
         }
     ],
     Pose.NONE: [
@@ -617,13 +618,14 @@ def get_pose(img):
     global model
     model_input = pre_process(img)
     output = model.execute([model_input])
-    humans = post_process(output[0][0])
     results = []
-    for human in humans:
-        results.append(analyze_pose(human))
+    if output is not None:
+        humans = post_process(output[0][0])
+        for human in humans:
+            results.append(analyze_pose(human))
 
-    draw(img, humans)
-    # also include the cordinates? => can keep track of the target when there are multiple humans
+        #draw(img, humans)
+        # also include the cordinates? => can keep track of the target when there are multiple humans
     return results
 
 # returns an array of four coordinates to be used as bounding box
