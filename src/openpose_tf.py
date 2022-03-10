@@ -638,7 +638,9 @@ def calculate_bounding_box(human, h, w):
             # TODO: Please add a pose for land here:
             "land": check_pose_func(check_pose[Pose.BOTH_ARM_UP], human),
             # TODO: Please add a pose for unfollow (cross sign):
-            "unfollow": False
+            "unfollow": False,
+            # TODO: pose does not exist in this branch, merge
+            "takepicture": check_pose_func(check_pose[Pose.LEFT_WAVE], human) or check_pose_func(check_pose[Pose.RIGHT_WAVE], human)
         }
 
     return None
