@@ -1,6 +1,11 @@
 # gesture-controlled-drone
 UBC ECE Capstone Project Team PN-17 (University of Bad Coders)
 
+## Requirements 
+1. Hardware: Atlas 200DK board, DJI Tello drone, and a router
+2. Ensure your Atlas 200DK board follows the setup steps found in https://www.notion.so/Atlas-200-DK-Setup-Guide-070b907c3c124381bdd6721618b81ef8, as well as all the requirements in this repository's requirements.txt 
+3. Clone this repository into the Atlas 200DK board, make sure you are on the main branch
+
 ## Project Setup Steps
 1. Power on Atlas 200DK board and connect it to Windows PC with USB. 
 2. Power on the Router and connect it to Atlas 200DK board using Ethernet Cable.
@@ -17,5 +22,5 @@ UBC ECE Capstone Project Team PN-17 (University of Bad Coders)
 13. Double check that the board is able to access the internet using commands such as curl google.ca
 
 ### To run the integrated project: 
-1. Go to directory ~/CPEN491/src/, prepare the presenter server using bash lib/server/run_presenter_server.sh uav_presenter_server.conf
-2. Go to directory  ~/CPEN491/src/pid_controllers/, run python3 run_track.py to start the project
+1. Go to directory ~/src/, prepare the presenter server using bash lib/server/run_presenter_server.sh uav_presenter_server.conf
+2. Go to directory  ~/src/pid_controllers/, run python3 run_track.py to start the project
