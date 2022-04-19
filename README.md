@@ -18,9 +18,9 @@ UBC ECE Capstone Project Team PN-17 (University of Bad Coders)
 9. On your Windows PC, go to Advanced network settings -> Change adaptor options and find Your Wifi or Ethernet Apapter.
 10. Right click on Your Wifi or Ethernet Apapter and select Properties.
 11. Select sharing tab, check Allow other network users to connect through this computer’s internet connection, and pick the network name of the USB RNDIS Adapter.
-12. Login to the board using ssh HwHiAiUser@192.168.1.2 with password Mind@123
-13. Double check that the board is able to access the internet using commands such as curl google.ca
+12. Repeat step 7 if needed.
+13. Login to the board using ssh HwHiAiUser@192.168.1.2 with password Mind@123
+14. Double check that the board is able to access the internet using commands such as curl google.ca
 
 ### To run the integrated project: 
-1. Go to directory ~/src/, prepare the presenter server using bash lib/server/run_presenter_server.sh uav_presenter_server.conf
-2. Go to directory  ~/src/pid_controllers/, run python3 run_track.py to start the project
+1. Go to directory  ~/src/pid_controllers/, run python3 run_track.py to start the project
