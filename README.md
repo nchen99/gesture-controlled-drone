@@ -36,6 +36,9 @@ https://github.com/Ascend-Huawei/HiFly_Drone
 
 ### Gesture Recognition
 
-### Face Recognition
+### Face Tracking
+With OpenPose(https://github.com/CMU-Perceptual-Computing-Lab/openpose), we can recognize the nose and neck of a person. We draw a line between the nose and neck and we measure the distance (in pixel). If the distance is too large, it means the drone is too close to the person and it should move backward; if the distance is too small, it means the drone is too far away from the person and it should move forward. 
+If there are multiple people in one frame, it's important for the drone to "always follow one person". We define D(p1, p2) (aka the distance between person 1 and person 2) to be max(D(p1.nose, p2.nose), D(p1.neck, p2.neck)), where D(p1.nose, p2.nose) means the Euclidean distance in pixel between the nose of the first person and the nose of the second person. In the next frame, we calculate the D(p', p) for each person p' (person p is the person that the drone tracked in the last frame), and pick up the person that has the smallest D(p', p) to track.
+[![Screen-Shot-2022-04-25-at-10-53-17-AM.png](https://i.postimg.cc/Qt763VCR/Screen-Shot-2022-04-25-at-10-53-17-AM.png)](https://postimg.cc/gXYyyzvD)
 
 ### Future Improvement
