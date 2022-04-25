@@ -27,3 +27,15 @@ https://github.com/Ascend-Huawei/HiFly_Drone
 
 ### To run the integrated project: 
 1. Go to directory  ~/src/pid_controllers/, run python3 run_track.py to start the project
+
+
+## State Workflow
+
+
+## Our Implementation
+
+### Gesture Recognition
+
+### Face Recognition
+
+### Future Improvement
