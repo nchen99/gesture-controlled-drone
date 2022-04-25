@@ -30,7 +30,7 @@ https://github.com/Ascend-Huawei/HiFly_Drone
 
 
 ## State Workflow
-
+![alt text](https://postimg.cc/XZPdTfFr)
 
 ## Our Implementation
 
