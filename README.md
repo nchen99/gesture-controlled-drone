@@ -43,8 +43,7 @@ If there are multiple people in one frame, it's important for the drone to "alwa
 
 [![Screen-Shot-2022-04-25-at-10-55-11-AM.png](https://i.postimg.cc/Nfnr1Dpk/Screen-Shot-2022-04-25-at-10-55-11-AM.png)](https://postimg.cc/SJWs460n)
 
-### Future Improvement
-####Obstacle Avoidance: 
+### Obstacle Avoidance(Future Improvement)
 We added 6 infrared sensors in 6 directions, each sensor will tell the drone how far away is an abstacle in a direction. The 200-DK board will then figure out in which direction and in what speed the drone should move away from the obstacle.
 
 [![Screen-Shot-2022-04-25-at-11-00-57-AM.png](https://i.postimg.cc/KjMhCZhz/Screen-Shot-2022-04-25-at-11-00-57-AM.png)](https://postimg.cc/SYkPMbsF)
