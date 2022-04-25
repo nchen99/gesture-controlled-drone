@@ -1,6 +1,9 @@
 # gesture-controlled-drone
 UBC ECE Capstone Project Team PN-17 (University of Bad Coders)
 
+## HiFly Link
+https://github.com/Ascend-Huawei/HiFly_Drone
+
 ## Requirements 
 1. Hardware: Atlas 200DK board, DJI Tello drone, and a router
 2. Ensure your Atlas 200DK board follows the setup steps found in https://www.notion.so/Atlas-200-DK-Setup-Guide-070b907c3c124381bdd6721618b81ef8, as well as all the requirements in this repository's requirements.txt 
