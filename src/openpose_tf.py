@@ -430,6 +430,7 @@ acl_resource = None
 model = None
 
 
+### List of Poses ###
 class Pose(Enum):
     KEY_MISSING = -1
     NONE = 0 # any
@@ -446,11 +447,37 @@ class Pose(Enum):
     LEFT_WAVE = 11
     RIGHT_WAVE = 12
 
+
+### Thresholds for gesture logics ###
+# This can be improved by adjusting the values dynamically based on the nose-neck distance
+# 1 => maximum threshold to check if the square of cartesian distance between two points is considered "close"
+#      example: clap checks if the left and right wrists are close
+# 2 => minimum threshold to check if the difference between x or y of two points is considered "apart"
+#      example: arm crossed checks if the left and right wrist are apart
+# 3 => maximum threshold to check if the difference between x or y of two points is considered "close"
+#      example: right arm out checks if the y values of shoulder, elbow, and wrist are close
 threshold = 0.01
 threshold2 = 0.1
 threshold3 = 0.05
 
-# If there are any pose that are really inconsistent (like confirm) do consider removing it to not intefere with other poses
+
+### The gesture logics ###
+# Notes:
+#   - The order of this list matters, the gestures will get checked from top to bottom, and will return the first
+#     one that passes the check function. This can simply logic for right_arm_up for example: checking
+#     both_arm_up first ensures that at most 1 arm will be up, so we don't have to check the other arm being down.
+#
+#   - To add a pose:
+#       1. Register the pose name in the Pose class
+#       2. Insert the pose into this dictionary following this format:
+#             Pose.PoseName : [
+#                 {
+#                     "req": [required body parts for logic],
+#                     "check": (lambda bp: (logic))
+#                 },
+#                 ... add more checks with different req and check if applicable
+#             ]
+#
 check_pose = {
     Pose.CONFIRM: [
         {
@@ -567,6 +594,7 @@ boxReq = [CocoPart.Nose.value,
           CocoPart.RShoulder.value, CocoPart.LShoulder.value, CocoPart.Neck.value]
 
 
+# Given Human, it will return the first pose that passes the check function
 def analyze_pose(human):
     global threshold
     # print(human)
@@ -603,6 +631,7 @@ def analyze_pose(human):
     # return Pose.NONE
 
 
+# initializes Model and ACL resource
 def init(model_path):
     print("hahahahah\n\n\n\n\n\n", model_path)
     global acl_resource, model
@@ -613,6 +642,7 @@ def init(model_path):
 
 
 # input: cv2 Mat
+# return: list of poses corresponding to every human detected
 def get_pose(img):
     global model
     model_input = pre_process(img)
@@ -631,8 +661,9 @@ def get_pose(img):
 # returns an array of four coordinates to be used as bounding box
 
 
-
-
+# given image, calculates and draws the bounding box for each human
+# return: a list of (human information) (see calculate_bounding_box) that contains the coordinates
+#         for every human's bounding box
 def get_bounding_box(img):
     global model
     model_input = pre_process(img)
@@ -655,6 +686,9 @@ def get_bounding_box(img):
 
     return results
 
+
+# Checks if a human is making a certain pose
+# return: True (human is making the pose)/ False
 def check_pose_func(pose, human):
     global threshold
 
