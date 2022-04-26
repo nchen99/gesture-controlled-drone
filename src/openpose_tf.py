@@ -446,8 +446,6 @@ class Pose(Enum):
     LEFT_WAVE = 11
     RIGHT_WAVE = 12
 
-
-# TODO: set a dynamic threshold based on how big the person is
 threshold = 0.01
 threshold2 = 0.1
 threshold3 = 0.05
@@ -529,12 +527,13 @@ check_pose = {
     Pose.BOTH_ARM_UP: [
         {
             "req": [CocoPart.RWrist.value, CocoPart.RShoulder.value, CocoPart.LWrist.value, CocoPart.LShoulder.value],
-            "check": (lambda bp: bp[CocoPart.RWrist.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LWrist.value].y < bp[CocoPart.LShoulder.value].y)
-        },
-        {
-            "req": [CocoPart.RElbow.value, CocoPart.RShoulder.value, CocoPart.LElbow.value, CocoPart.LShoulder.value],
-            "check": (lambda bp: bp[CocoPart.RElbow.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y < bp[CocoPart.LShoulder.value].y)
+            "check": (lambda bp: bp[CocoPart.RShoulder.value].y- bp[CocoPart.RWrist.value].y > threshold2 and bp[CocoPart.LShoulder.value].y - bp[CocoPart.LWrist.value].y > threshold2)
         }
+        # Commented out for testing purposes
+        # {
+        #     "req": [CocoPart.RElbow.value, CocoPart.RShoulder.value, CocoPart.LElbow.value, CocoPart.LShoulder.value],
+        #     "check": (lambda bp: bp[CocoPart.RElbow.value].y < bp[CocoPart.RShoulder.value].y and bp[CocoPart.LElbow.value].y < bp[CocoPart.LShoulder.value].y)
+        # }
     ],
     Pose.RIGHT_ARM_UP: [
         {
@@ -626,6 +625,7 @@ def get_pose(img):
 
         #draw(img, humans)
         # also include the cordinates? => can keep track of the target when there are multiple humans
+
     return results
 
 # returns an array of four coordinates to be used as bounding box
@@ -710,7 +710,8 @@ def calculate_bounding_box(human, h, w):
             # TODO: Please add a pose for land here:
             "land": check_pose_func(check_pose[Pose.BOTH_ARM_UP], human),
             # TODO: Please add a pose for unfollow (cross sign):
-            "unfollow": False
+            "unfollow": False,
+            "takepicture": check_pose_func(check_pose[Pose.BOTH_ARM_OUT], human)
         }
 
     return None
