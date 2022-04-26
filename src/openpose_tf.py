@@ -29,7 +29,7 @@ from atlas_utils.acl_model import Model as AclLiteModel
 
 
 MODEL_PATH = os.path.join(
-    "/home/HwHiAiUser/CPEN491/model/OpenPose_for_TensorFlow_BatchSize_1.om")
+    "/home/HwHiAiUser/gesture-controlled-drone/model/OpenPose_for_TensorFlow_BatchSize_1.om")
 IMAGE_PATH = sys.argv[1] if len(sys.argv) > 1 else "./assets/in.png"
 
 print("MODEL_PATH:", MODEL_PATH)
@@ -441,14 +441,16 @@ class Pose(Enum):
     BOTH_ARM_OUT = 6
     LEFT_ARM_OUT = 7
     RIGHT_ARM_OUT = 8
-    LEFT_WAVE = 9
-    RIGHT_WAVE = 10
-
+    ARM_CROSSED_HIGH = 9
+    ARM_CROSSED_LOW = 10
+    LEFT_WAVE = 11
+    RIGHT_WAVE = 12
 
 threshold = 0.01
 threshold2 = 0.1
 threshold3 = 0.05
 
+# If there are any pose that are really inconsistent (like confirm) do consider removing it to not intefere with other poses
 check_pose = {
     Pose.CONFIRM: [
         {
@@ -491,6 +493,20 @@ check_pose = {
                                  bp[CocoPart.LWrist.value].y > bp[CocoPart.LElbow.value].y and
                                  abs(bp[CocoPart.RShoulder.value].y - bp[CocoPart.RElbow.value].y) < threshold3 and
                                  abs(bp[CocoPart.RElbow.value].y - bp[CocoPart.RWrist.value].y)  < threshold3)
+        }
+    ],
+    Pose.ARM_CROSSED_HIGH: [
+        {
+            "req": [CocoPart.RWrist.value, CocoPart.LWrist.value, CocoPart.LElbow.value],
+            "check": (lambda bp: bp[CocoPart.RWrist.value].x - bp[CocoPart.LWrist.value].x > threshold2 and
+                                 bp[CocoPart.LWrist.value].y > bp[CocoPart.LElbow.value].y)
+        }
+    ],
+    Pose.ARM_CROSSED_LOW: [
+        {
+            "req": [CocoPart.RWrist.value, CocoPart.LWrist.value, CocoPart.LElbow.value],
+            "check": (lambda bp: bp[CocoPart.RWrist.value].x - bp[CocoPart.LWrist.value].x > threshold2 and
+                                 bp[CocoPart.LWrist.value].y < bp[CocoPart.LElbow.value].y)
         }
     ],
     # Left wave will override the right wave if they are done at the same time
@@ -607,8 +623,9 @@ def get_pose(img):
         for human in humans:
             results.append(analyze_pose(human))
 
-    # draw(img, humans)
-    # also include the cordinates? => can keep track of the target when there are multiple humans
+        #draw(img, humans)
+        # also include the cordinates? => can keep track of the target when there are multiple humans
+
     return results
 
 # returns an array of four coordinates to be used as bounding box
