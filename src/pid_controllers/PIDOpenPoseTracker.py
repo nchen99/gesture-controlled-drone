@@ -195,8 +195,10 @@ class PIDOpenPoseTracker(TelloPIDController):
         if result["takepicture"]:
             # TODO: spins in circle, not sure if works
             # Check how long it takes, we want to give user time to make pose
+
+            # self.uav.rotate_counter_clockwise(360)
             self.uav.send_rc_control(0, 0, 0, 0)
-            self.uav.flip_left()
+            self.uav.flip_right()
             self.takepicture = True
             self.picturetimeout = time.time() + 3
 
@@ -232,6 +234,8 @@ class PIDOpenPoseTracker(TelloPIDController):
             if not self.track_mode and self.search_mode:
                 # self.uav.move_up(50)
                 # self.uav.move_down(50)
+                self.uav.send_rc_control(0, 0, 0, 0)
+                time.sleep(1)
                 self.uav.flip_left()
             self.track_mode = True
             self.search_mode = False
@@ -256,14 +260,18 @@ class PIDOpenPoseTracker(TelloPIDController):
         #     self.nose = None
         #     self.neck = None
         #     return 0, 0, result_img
+
         if self.takepicture:
+            # picture_time = time.time_ns()
+            # cv2.imwrite(f"./outputs/{picture_time}.png", frame)
             if time.time() > self.picturetimeout:
                 picture_time = time.time_ns()
+                print("taking a picture!!!!!!!")
                 # TODO: check if this slows down the drone, ake a new thread/write upon landing if its causing trouble
                 cv2.imwrite(f"./outputs/{picture_time}.png", frame)
                 self.takepicture = False
                 self.picturetimeout = 0
-
+        
         if self.search_mode or result is None:
             self._search()
             return prev_x_err, prev_y_err, result_img
