@@ -4,6 +4,9 @@ UBC ECE Capstone Project Team PN-17 (University of Bad Coders)
 ## HiFly Link
 https://github.com/Ascend-Huawei/HiFly_Drone
 
+## Final Demo Video
+https://www.youtube.com/watch?v=7ZVxNtVQn8Q
+
 ## Requirements 
 1. Hardware: Atlas 200DK board, DJI Tello drone, and a router
 2. Ensure your Atlas 200DK board follows the setup steps found in https://www.notion.so/Atlas-200-DK-Setup-Guide-070b907c3c124381bdd6721618b81ef8, as well as all the requirements in this repository's requirements.txt 
@@ -44,7 +47,7 @@ If there are multiple people in one frame, it's important for the drone to "alwa
 [![Screen-Shot-2022-04-25-at-10-55-11-AM.png](https://i.postimg.cc/Nfnr1Dpk/Screen-Shot-2022-04-25-at-10-55-11-AM.png)](https://postimg.cc/SJWs460n)
 
 ### Obstacle Avoidance(Future Improvement)
-We added 6 infrared sensors in 6 directions, each sensor will tell the drone how far away is an abstacle in a direction. The 200-DK board will then figure out in which direction and in what speed the drone should move away from the obstacle.
+We added 6 infrared sensors in 6 directions, each sensor will tell the drone how far away is an abstacle in a direction. The 200-DK board will then figure out in which direction and in what speed the drone should move away from the obstacle. Here is a link to a video demo of the tests completed so far: https://youtu.be/gh6r0lO72FQ
 
 [![Screen-Shot-2022-04-25-at-11-00-57-AM.png](https://i.postimg.cc/KjMhCZhz/Screen-Shot-2022-04-25-at-11-00-57-AM.png)](https://postimg.cc/SYkPMbsF)
 
