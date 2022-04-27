@@ -30,7 +30,7 @@ https://github.com/Ascend-Huawei/HiFly_Drone
 
 
 ## State Workflow
-[![State.png](https://i.postimg.cc/1tmBVM3r/State.png)](https://postimg.cc/XZPdTfFr)
+![state_workflow.jpg](https://github.com/nchen99/gesture-controlled-drone/blob/ea75b557a639cf6aa32190e1be4fd2f3d2ada076/state_workflow.jpg?raw=true)
 
 ## Our Implementation
 
