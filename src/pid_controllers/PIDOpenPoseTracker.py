@@ -8,6 +8,7 @@ from inference_filters.DecisionFilter import DecisionFilter
 from model_processors.FaceDetectionProcessor import sigmoid, yolo_head, yolo_correct_boxes, yolo_boxes_and_scores, nms, yolo_eval, get_box_img
 from TelloPIDController import TelloPIDController
 import openpose_tf
+import math
 
 class PIDOpenPoseTracker(TelloPIDController):
     """
@@ -35,6 +36,8 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.setpoint_area = (80, 120)        # Lower and Upper bound for Forward&Backward Range-of-Motion - can be adjusted    
         # ------------------------------- Don't forget to change the value here------------
         self.save_flight_hist = save_flight_hist
+        self.nose = None
+        self.neck = None
 
            
     def _unpack_feedback(self, frame):
@@ -89,8 +92,8 @@ class PIDOpenPoseTracker(TelloPIDController):
         # Compensator: calcuate the amount adjustment needed in YAW axis and distance
         # Localization of ToI to the center x-axis - adjusts camera angle
         if x_err != 0:
-            yaw_velocity = self._pid(x_err, prev_x_err)
-            yaw_velocity = int(np.clip(yaw_velocity, -100, 100))
+            yaw_velocity = 1.2 * self._pid(x_err, prev_x_err)
+            yaw_velocity = int(np.clip(yaw_velocity, -120, 10))
 
         # Localization of ToI to the center y-axis - adjust altitude 
         if y_err != 0:
@@ -101,9 +104,9 @@ class PIDOpenPoseTracker(TelloPIDController):
         if dist > self.setpoint_area[0] and dist < self.setpoint_area[1]:
             forward_backward_velocity = 0
         elif dist < self.setpoint_area[0]:
-            forward_backward_velocity = 20
+            forward_backward_velocity = 30
         elif dist > self.setpoint_area[1]:
-            forward_backward_velocity = -20
+            forward_backward_velocity = -30
 
         # Saves run history in a list for serialization
         if self.save_flight_hist:
@@ -132,6 +135,8 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.uav.send_rc_control(0,0,0,20)
         return
 
+
+
     def _manage_state(self, frame):
         """State Manager
         Infer surroundings to check if ToI is present, pass feedback to Filter to smooth out detection result. Break out of Search Mode 
@@ -143,10 +148,24 @@ class PIDOpenPoseTracker(TelloPIDController):
             result_img   - inference result superimposed on frame
             process_vars - Tuple(bbox_area, bbox_center) of process variables
         """
-        result = self._unpack_feedback(frame)
-        if len(result) == 0:
+        results = self._unpack_feedback(frame)
+        if len(results) == 0:
             return None, None
-        result = result[0]
+
+        result = results[0]
+        if self.nose == None or self.neck == None:
+            # search someone with the largest dist:
+            result = max(results, key = lambda i : i["dist"])
+
+        else:
+            calc_dist = lambda p1, p2 : math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+            max_dist = lambda i : max(calc_dist(i["nose"], self.nose), calc_dist(i["neck"], self.neck))
+            # search with lowest difference:
+            result = min(results, key=max_dist)
+            
+        self.nose = result["nose"]
+        self.neck = result["neck"]
+        
         # ----------------------------------- area is not used here!!! -------------------------
         dist, center = result["dist"], result["center"]
 
