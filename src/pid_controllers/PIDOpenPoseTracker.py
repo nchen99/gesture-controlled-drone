@@ -92,8 +92,8 @@ class PIDOpenPoseTracker(TelloPIDController):
         # Compensator: calcuate the amount adjustment needed in YAW axis and distance
         # Localization of ToI to the center x-axis - adjusts camera angle
         if x_err != 0:
-            yaw_velocity = self._pid(x_err, prev_x_err)
-            yaw_velocity = int(np.clip(yaw_velocity, -100, 100))
+            yaw_velocity = 1.2 * self._pid(x_err, prev_x_err)
+            yaw_velocity = int(np.clip(yaw_velocity, -120, 10))
 
         # Localization of ToI to the center y-axis - adjust altitude 
         if y_err != 0:
@@ -104,9 +104,9 @@ class PIDOpenPoseTracker(TelloPIDController):
         if dist > self.setpoint_area[0] and dist < self.setpoint_area[1]:
             forward_backward_velocity = 0
         elif dist < self.setpoint_area[0]:
-            forward_backward_velocity = 20
+            forward_backward_velocity = 30
         elif dist > self.setpoint_area[1]:
-            forward_backward_velocity = -20
+            forward_backward_velocity = -30
 
         # Saves run history in a list for serialization
         if self.save_flight_hist:
@@ -135,8 +135,6 @@ class PIDOpenPoseTracker(TelloPIDController):
         self.uav.send_rc_control(0,0,0,20)
         return
 
-    def calculate_diff(p1, p2):
-        return math.sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2)
 
 
     def _manage_state(self, frame):
@@ -160,11 +158,10 @@ class PIDOpenPoseTracker(TelloPIDController):
             result = max(results, key = lambda i : i["dist"])
 
         else:
+            calc_dist = lambda p1, p2 : math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+            max_dist = lambda i : max(calc_dist(i["nose"], self.nose), calc_dist(i["neck"], self.neck))
             # search with lowest difference:
-            result = min(results, key = lambda i : max(
-                self.calculate_diff(i["nose"], self.nose),
-                self.calculate_diff(i["neck"], self.neck)
-            ))
+            result = min(results, key=max_dist)
             
         self.nose = result["nose"]
         self.neck = result["neck"]
